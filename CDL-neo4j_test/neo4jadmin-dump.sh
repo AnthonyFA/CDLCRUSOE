@@ -1,0 +1,1 @@
+docker run -it --rm --volume=./data:/data --volume=./datasets/:/backups neo4j/neo4j-admin:4.4.32 neo4j-admin load --from=/backups/robot-use-case-neo4j-May-28-2024-16-02-01.dump --database=neo4j --force

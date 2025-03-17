@@ -1,0 +1,1 @@
+docker run -it --rm --volume=./docker-volume-crusoe-observe:/data --volume=./datasets/:/datasets neo4j/neo4j-admin:4.4.32 neo4j-admin load --from=/datasets/cyber-czech-neo4j-Jan-30-2025-16-36-11.dump --database=neo4j --force

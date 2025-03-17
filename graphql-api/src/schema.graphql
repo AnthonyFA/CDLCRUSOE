@@ -3,7 +3,7 @@ scalar JSONObject
 
 type SoftwareVersion {
   _id: Long!
-  tag: String!
+  tag: String
   version: String!
   on: [Host] @relation(name: "ON", direction: OUT)
   ON_rel: [ON]
@@ -30,10 +30,10 @@ type Host {
   softwareversions: [SoftwareVersion] @relation(name: "ON", direction: IN)
   components: [Component] @relation(name: "PROVIDED_BY", direction: IN)
   configurations: [Configuration] @relation(name: "CONTAINS", direction: IN)
-  networkservices: [NetworkService] @relation(name: "ON", direction: "IN")
-  os: [SoftwareVersion] @relation(name: "ON", direction: "IN")
-  antivirus: [SoftwareVersion] @relation(name: "ON", direction: "IN")
-  cms: [SoftwareVersion] @relation(name: "ON", direction: "IN")
+  networkservices: [NetworkService] @relation(name: "ON", direction: IN)
+  os: [SoftwareVersion] @relation(name: "ON", direction: IN)
+  antivirus: [SoftwareVersion] @relation(name: "ON", direction: IN)
+  cms: [SoftwareVersion] @relation(name: "ON", direction: IN)
 }
 
 type Contact {
@@ -55,7 +55,7 @@ type OrganizationUnit {
 
 type Subnet {
   _id: Long!
-  note: String!
+  note: String
   range: String!
   part_of: [OrganizationUnit] @relation(name: "PART_OF", direction: OUT)
   PART_OF_rel: [PART_OF]
@@ -101,7 +101,7 @@ type Vulnerability {
 type DomainName {
   _id: Long!
   domain_name: JSON
-  tag: String!
+  tag: String
   ips: [IP] @relation(name: "RESOLVES_TO", direction: IN)
 }
 
@@ -122,8 +122,8 @@ type NetworkService {
   port: Int!
   protocol: String!
   service: String!
-  tag: String!
-  hosts: [Host] @relation(name: "ON", direction: "OUT")
+  tag: String
+  hosts: [Host] @relation(name: "ON", direction: OUT)
 }
 
 type Component {

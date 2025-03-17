@@ -159,11 +159,11 @@
     - { line: "dbms.connector.http.listen_address=0.0.0.0:7474" }
     - { line: "dbms.connector.bolt.listen_address=0.0.0.0:7687" }
 
-- name: Copy Graph Algorithms
-  copy:
-    src: graph-algorithms-algo-3.5.4.0.jar
-    dest: /var/lib/neo4j/plugins
-    mode: 0644
+#- name: Copy Graph Algorithms
+#  copy:
+#    src: graph-algorithms-algo-3.5.4.0.jar
+#    dest: /var/lib/neo4j/plugins
+#    mode: 0644
 
 - name: Restart neo4j
   service:

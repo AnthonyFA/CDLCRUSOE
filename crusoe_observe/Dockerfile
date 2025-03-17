@@ -80,8 +80,8 @@ RUN apt-get update && apt-get install -y apache2 libapache2-mod-wsgi-py3 \
 RUN mkdir -p /usr/share/man/man1 \
   && apt-get install -y default-jre default-jdk \
   && wget -O /etc/apt/trusted.gpg.d/neotechnology.gpg.key https://debian.neo4j.com/neotechnology.gpg.key \
-  && echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/neotechnology.gpg.key] https://debian.neo4j.com stable 3.5' > /etc/apt/sources.list.d/neo4j.list \
-  && apt-get update && apt-get install -y neo4j=1:3.5.3
+  && echo 'deb [arch=amd64 signed-by=/etc/apt/trusted.gpg.d/neotechnology.gpg.key] https://debian.neo4j.com stable 4.4' > /etc/apt/sources.list.d/neo4j.list \
+  && apt-get update && apt-get install -y neo4j=1:4.4.41
 
 # Install additional Python packages
 RUN pip3 install requests structlog django djangorestframework
@@ -114,7 +114,8 @@ RUN cp -r /tmp/neo4j-rest/django /var/www/ \
 
 # Neo4j Database configuration
 
-COPY ansible/roles/neo4j/files/apoc-3.5.0.2-all.jar /var/lib/neo4j/plugins/
+COPY ansible/roles/neo4j/files/apoc-4.4.0.35-all.jar /var/lib/neo4j/plugins/
+COPY ansible/roles/neo4j/files/neo4j-graph-data-science-2.3.0.jar /var/lib/neo4j/plugins/
 
 RUN echo "dbms.security.procedures.unrestricted=apoc.load.json, algo.*, apoc.convert.*, apoc.schema.assert" >> /etc/neo4j/neo4j.conf \
   && echo "apoc.import.file.use_neo4j_config=true" >> /etc/neo4j/neo4j.conf \

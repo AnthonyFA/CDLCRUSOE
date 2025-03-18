@@ -1,4 +1,4 @@
-##Quickstart
+## Quickstart
 
 Para empezar a construir el entorno basta con lanzar:
 ``` shell

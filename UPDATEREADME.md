@@ -2,8 +2,8 @@
 
 Para empezar a construir el entorno basta con lanzar:
 ``` shell
-Docker compose build --no-cache
-Docker compose up 
+docker compose build --no-cache
+docker compose up 
 ```
 Una vez lanzado el escenario será necesario comprobar si la Base de Datos de Neo4j esta áctiva, por lo que deberemos acceder al contenedor de observer y ver si se ejecuta:
 ``` shell

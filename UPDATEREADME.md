@@ -20,3 +20,10 @@ Para poder cargar los datos y poner a prueba el entorno, recomendamos cargar el 
 ```
 
 ## Modifications
+Las modificaciones realizadas para poner en funcionamiento CRUSOE original ha sido la adaptación de neo4j en el archivo **crusoe_observer/Dockerfile**, en donde se ha añadido la versión `neo4j=1:4.4.41` y `stable 4.4`para que este contará con una version mas actualizada. Además, se han agregado una serie de pluggins para que estos funcionaran:
+```
+COPY ansible/roles/neo4j/files/apoc-4.4.0.35-all.jar /var/lib/neo4j/plugins/
+COPY ansible/roles/neo4j/files/neo4j-graph-data-science-2.3.0.jar /var/lib/neo4j/plugins/
+```
+
+Otro elemento modificado en este proyecto han sido las IPs que se muestran a lo largo del **docker-compose.yml**, en donde se han establecido la IP de la máquina local con la que hemos trabajado a lo largo de nuestro proyecto de investigación. Por lo que si desea desplegarlo por su cuenta, le recomendamos que use una red local o la respectiva para montar el escenario.

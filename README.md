@@ -26,5 +26,24 @@ The modifications made to put in operation the original CRUSOE has been the adap
 COPY ansible/roles/neo4j/files/apoc-4.4.0.35-all.jar /var/lib/neo4j/plugins/
 COPY ansible/roles/neo4j/files/neo4j-graph-data-science-2.3.0.jar /var/lib/neo4j/plugins/
 ```
-
+### URL and IPs
 Another modified element in this project has been the IPs shown throughout the **docker-compose.yml**, where we have set the IP of the local machine we have worked with throughout our research project. So if you want to deploy it on your own, we recommend that you use a local or respective network to set up the scenario.
+
+For example, on the following code we can see we have modified previous IP directions with our own, taking into account that all our modified directions has the same IP value. Futhermore, the **bride_crusoe** IP has`nt been modifed because they have still not been use:
+``` python
+    build:
+      context: ./crusoe_orient
+      args:
+        NEO4J_REST_URL: "http://172.22.104.217/rest/" #"http://192.168.5.136/rest/"
+        # # URL Where Flower backend is available
+        FLOWER_URL: "http://172.22.104.217:5555/" #"http://192.168.5.136:5555/"
+        # # URL Where act-overseer is available
+        ACT_API_URL: "http://172.22.104.217/act" #"http://192.168.5.136/act"
+        # # URL Where graphql is available
+        GRAPHQL_URL: "http://172.22.104.217:4001/graphql" #"http://192.168.5.136:4001/graphql"
+        # # URL Where the simulated firewall is available
+        FIREWALL_PAO_URL: "http://172.22.104.217:8086/firewall" #"http://192.168.5.136:8086/firewall"
+        # # RECOMMENDER
+        RECOMMENDER_API: "http://172.22.104.217:16005/recommender" #"http://192.168.5.136:16005/recommender"
+```
+## Use Cases

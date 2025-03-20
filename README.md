@@ -11,7 +11,12 @@ Once the scenario is launched it will be necessary to check if the Neo4j Databas
 docker exec -it "ID"  /bin/bash
 neo4j status
 ```
-In case it does not run we will have to launch `neo4j start`.
+
+In case it does not run we will have to launch `neo4j start`. Una vez lanzado, en el apartado de Docker debería mostrar lo siguiente:
+![image](https://github.com/user-attachments/assets/04ac6741-43e7-4b3d-9fdd-c8046b42393d)
+
+
+
 Once it finishes running, access the link where CRUSOE is displayed, and enter the values **neo4j:neo4j** as user:password, after entering them we will be able to change the password. In this case we recommend to enter the password
 password because it is the one that allows the correct operation.
 
@@ -47,3 +52,4 @@ For example, on the following code we can see we have modified previous IP direc
         RECOMMENDER_API: "http://172.22.104.217:16005/recommender" #"http://192.168.5.136:16005/recommender"
 ```
 ## Use Cases
+

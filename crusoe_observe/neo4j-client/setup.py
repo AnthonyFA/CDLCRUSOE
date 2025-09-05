@@ -6,7 +6,7 @@ setup(
         description='neo4j library for crusoe',
         author='CSIRT-MU',
         keywords='crusoe neo4j',
-        install_requires=['neo4j-driver==1.7', 'pytest', 'neo4j'],
+        install_requires=['neo4j-driver==5.0', 'pytest', 'neo4j'],
         python_requires='>=3.6',
         packages=['neo4jclient']
         )

@@ -49,7 +49,7 @@ def get_paos(user, passwd, server_url, logger):
                                            verify=filename('data/cert_file.crt'))
         return wrapper_ip_port_get.json()
     except requests.exceptions.ConnectionError as e:
-        logger.error(f"Can't connect to database REST API. {e}")
+        logger.error(f"Can't connect to database REST APIs. {e}")
 
 
 def update_last_contact(pao, user, passwd, server_url, logger):

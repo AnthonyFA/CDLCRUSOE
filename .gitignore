@@ -1,1 +1,14 @@
 /docker-volume-crusoe-observe
+.vscode
+/crusoe_decide/build/
+
+# Archivos temporales de Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Paquetes y builds
+*.egg-info/
+build/
+dist/

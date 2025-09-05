@@ -132,7 +132,7 @@ import { MatSelectModule } from '@angular/material/select';
     AppRoutingModule,
     OAuthModule.forRoot({
       resourceServer: {
-        allowedUrls: ['https://oidc.muni.cz/oidc/userinfo', 'http://localhost:8000/api/panels'],
+        allowedUrls: ['http://localhost:8000/api/panels'],
         sendAccessToken: true,
       },
     }),

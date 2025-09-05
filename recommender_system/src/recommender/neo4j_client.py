@@ -4,6 +4,16 @@ from recommender.model import SoftwareComponent
 from recommender.model.host import Host, HostWithScore
 from recommender.model.network_service import NetworkService
 from recommender.model.path_type import PathType
+import logging
+import os
+
+log_path = "/tmp/recommender_debug.log"
+logging.basicConfig(
+    filename=log_path,
+    filemode='a',
+    level=logging.DEBUG,
+    format='%(asctime)s [%(levelname)s] %(message)s'
+)
 
 
 class Neo4jClient:
@@ -78,42 +88,46 @@ class Neo4jClient:
         return new_host
 
     def find_close_hosts(self, ip, max_distance):
-        """
-        Starts BFS traversal (uses Java traversal API) from a given IP node and
-        finds nearby hosts to the maximum distance given as an argument.
-        :param ip: IP address object of a host where BFS should start
-        :param max_distance: Maximum distance search from the initial host
-        :return: List of found HostWithScore objects
-        """
-        with self.__driver.session() as session:
-            # Dictionary for converting string to enum
-            path_types = {"subnet": PathType.Subnet,
-                          "organization": PathType.Organization,
-                          "contact": PathType.Contact}
+        self.__logger.info(f"▶️ find_close_hosts({ip}, {max_distance})")
+        with open("/tmp/recommender_debug.txt", "a") as f:
+            f.write(f"Entrando a find_close_hosts para IP: {ip}\n")
 
-            # Initialize result list
-            result_list = []
+        try:
+            with self.__driver.session() as session:
+                path_types = {
+                    "subnet": PathType.Subnet,
+                    "organization": PathType.Organization,
+                    "contact": PathType.Contact
+                }
 
-            for row in session.read_transaction(self.__find_close_hosts_query,
-                                                ip, max_distance):
-                # Map string path types to enum
-                host_path_types = list(map(lambda path: path_types[path],
-                                           row["path_types"]))
+                result_list = []
+                rows = session.read_transaction(self.__find_close_hosts_query, ip, max_distance)
+                
+                self.__logger.info(f"📦 {len(rows)} rows fetched from traverse.findCloseHosts")
+                print(f"ENTRANDO EN find_close_hosts PARA {ip}")
+                for row in rows:
+                    try:
+                        host_path_types = [path_types[path] for path in row["path_types"]]
+                        new_host = HostWithScore(
+                            row["ip"], row["domains"], row["contacts"],
+                            row["os"], row["antivirus"], row["cms"],
+                            row["cve_count"], row["event_count"],
+                            row["distance"], host_path_types
+                        )
 
-                new_host = HostWithScore(row["ip"], row["domains"],
-                                         row["contacts"],
-                                         row["os"], row["antivirus"],
-                                         row["cms"], row["cve_count"],
-                                         row["event_count"],
-                                         row["distance"],
-                                         host_path_types)
+                        new_host.network_services = self.__get_network_services(
+                            row["ip"], session, row["start"], row["end"]
+                        )
+                        result_list.append(new_host)
+                    except Exception as inner_ex:
+                        self.__logger.warning(f"⚠️ Skipped one row due to: {inner_ex}")
 
-                new_host.network_services = self.__get_network_services(
-                    row["ip"], session, row["start"], row["end"])
+                self.__logger.info(f"✅ find_close_hosts finished. Hosts: {len(result_list)}")
+                return result_list
 
-                result_list.append(new_host)
-
-            return result_list
+        except Exception as e:
+            self.__logger.error(f"🔥 Exception in find_close_hosts: {e}", exc_info=True)
+            return []
 
     def get_total_cve_count(self):
         """

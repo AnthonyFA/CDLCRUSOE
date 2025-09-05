@@ -1,6 +1,11 @@
 # Use Debian 10 as the base image
 FROM debian:10
 
+# COregir errores
+RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
+    sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
 # Install necessary packages
 RUN apt-get update && apt-get install -y \
   ruby-full \
@@ -116,8 +121,10 @@ RUN cp -r /tmp/neo4j-rest/django /var/www/ \
 
 COPY ansible/roles/neo4j/files/apoc-4.4.0.35-all.jar /var/lib/neo4j/plugins/
 COPY ansible/roles/neo4j/files/neo4j-graph-data-science-2.3.0.jar /var/lib/neo4j/plugins/
+COPY ansible/roles/neo4j/files/traverse-plugin-1.0.0.jar /var/lib/neo4j/plugins/
 
-RUN echo "dbms.security.procedures.unrestricted=apoc.load.json, algo.*, apoc.convert.*, apoc.schema.assert" >> /etc/neo4j/neo4j.conf \
+
+RUN echo "dbms.security.procedures.unrestricted=apoc.load.json, algo.*, apoc.convert.*, apoc.schema.assert, traverse.*" >> /etc/neo4j/neo4j.conf \
   && echo "apoc.import.file.use_neo4j_config=true" >> /etc/neo4j/neo4j.conf \
   && echo "apoc.import.file.enabled=true" >> /etc/neo4j/neo4j.conf \
   && echo "dbms.connector.http.listen_address=0.0.0.0:7474" >> /etc/neo4j/neo4j.conf \

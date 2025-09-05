@@ -5,7 +5,7 @@ import { Node, Edge } from '@swimlane/ngx-graph';
 import { environment } from 'src/environments/environment';
 import { Observable, throwError } from 'rxjs';
 import { AttackedIP, RecommendedIP } from '../models/recommended_ip.model';
-import { catchError, map } from 'rxjs/operators';
+import { switchMap, map, catchError } from 'rxjs/operators';
 @Injectable({
   providedIn: 'root',
 })
@@ -15,27 +15,30 @@ export class RecommenderService {
   constructor(private http: HttpClient) {}
 
   getRecommendations(ip: string): Observable<GraphInput> {
-    const root_url = `${this.apiUrl}recommender/attacked-host?ip=${ip}`;
-    let initial_node: AttackedIP;
-    this.http
-      .get<AttackedIP>(root_url)
-      .pipe(
-        map((data) => {
-          initial_node = data;
-        }),
-        catchError((err) => {
-          return throwError(err);
-        })
-      )
-      .subscribe();
-    const recommended_url = `${this.apiUrl}recommender/recommended-hosts?ip=${ip}`;
-    return this.http.get<RecommendedIP[]>(recommended_url).pipe(
-      map((data) => {
-        const { nodes, edges } = this.convertToGraph(data, ip, initial_node);
-        return { nodes, edges };
+    const rootUrl = `${this.apiUrl}recommender/attacked-host?ip=${ip}`;
+    const recommendedUrl = `${this.apiUrl}recommender/recommended-hosts?ip=${ip}`;
+
+return this.http.get<AttackedIP>(rootUrl).pipe(
+  switchMap((initial_node) => {
+    console.log('[✔️ initial_node]', initial_node);  // NUEVO
+
+        return this.http.get<RecommendedIP[]>(recommendedUrl).pipe(
+          map((data) => {
+            console.log('[✔️ recommended data]', data);  // NUEVO
+
+            const { nodes, edges } = this.convertToGraph(data, ip, initial_node);
+            console.log('[✔️ final graph]', { nodes, edges });  // NUEVO
+
+            return { nodes, edges };
+          })
+        );
+      }),
+      catchError((err) => {
+        console.error('Error loading recommendations:', err);
+        return throwError(() => err);
       })
-    );
-  }
+      );
+    }
 
   public convertToGraph(data: RecommendedIP[], root_ip: string, initial_node: AttackedIP): GraphInput {
     let nodes: Node[] = [];
@@ -50,14 +53,26 @@ export class RecommenderService {
         id: node_id,
         label: current.ip,
         data: {
-          ...current,
+          ...this.sanitizeNodeData(current),
           customColor: 'red',
         },
       });
 
+
       edges.push({ source: '0', target: node_id, label: 'Same ' + current.path_types.join(', ') });
     }
     return { nodes, edges };
+  }
+
+  private sanitizeNodeData(data: any): any {
+    const cleaned = { ...data };
+    if (typeof cleaned.risk === 'number' && !Number.isFinite(cleaned.risk)) {
+      cleaned.risk = 100;  // o null, o 'Max'
+    }
+    if (typeof cleaned.distance === 'number' && !Number.isFinite(cleaned.distance)) {
+      cleaned.distance = -1;  // o null
+    }
+    return cleaned;
   }
 
   private buildInitialNode(root_ip: string, initial_node: AttackedIP): Node {

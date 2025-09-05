@@ -23,12 +23,13 @@ class CumulativeSimilarityComparator(BaseComparator, ABC):
 
         avg = (n1 + n2) / 2.0
 
-        # Check zero values to avoid dividing by zero / returning zero
-        if avg == 0:
-            return 1.0 / total, False
-
+    
         if total == 0:
-            return 1, False
+            return 0.0, False
+
+        if avg == 0:
+            return 0.0, False
+
 
         result = avg / total
 

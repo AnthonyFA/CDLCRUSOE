@@ -23,7 +23,7 @@ from crusoe_decide.process import analytical_process
 #                         'CVE-2070-0005': 1.499}
 
 # Set your password to Neo4j database
-PASSWORD = "ne04jcrus03"
+PASSWORD = "password"
 
 CONSTRAINT_FILE = pkg_resources.resource_filename(__name__, 'test_data/constraint.json')
 

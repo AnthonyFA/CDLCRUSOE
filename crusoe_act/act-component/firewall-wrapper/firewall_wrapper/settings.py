@@ -25,8 +25,9 @@ SECRET_KEY = '7xz2(__u^xfr8qa$%ja74ey*bg)xbt=9n#27$2__!k8%s(ev8t'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
+USE_X_FORWARDED_HOST = True
 
 # Application definition
 

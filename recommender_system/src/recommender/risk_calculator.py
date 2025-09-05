@@ -1,6 +1,6 @@
 from recommender.comparators import *
 from recommender.model.path_type import PathType
-
+import math
 
 class RiskCalculator:
     """
@@ -40,7 +40,7 @@ class RiskCalculator:
         self.__set_reference_host(attacked_host)
 
         for host in compared_hosts:
-            host.risk = self.__calculate_risk_score(host)
+            host.risk = self._calculate_risk_score(host)
 
     def calculate_similarities(self, host1, host2):
         """
@@ -97,30 +97,59 @@ class RiskCalculator:
         :return: None
         """
         for comparator in self.__comparators:
-            comparator.set_reference_host(attacked_host)
 
-    def __calculate_risk_score(self, compared_host):
+            comparator.set_reference_host(attacked_host)
+            
+    def _calculate_risk_score(self, compared_host):
         """
         Compares attacked host with given host by applying the list
         of comparators. Result similarity is divided by distance between hosts
         and multiplied by path coefficient.
         :param compared_host: Host to be compared with attacked host
         :return: Risk score between attacked host and compared host
-        Sets reference host to every comparator in the comparator list
         """
+        import math
+        import logging
 
-        # Default similarity is 1
-        similarity = 1
+        logger = logging.getLogger(__name__)
 
-        # Multiply result similarity by partial similarities obtained
-        # by applying list of comparators on compared host
+        # Evitar comparación consigo mismo (si se da el caso)
+        if hasattr(compared_host, 'id') and hasattr(self, '_RiskCalculator__reference_host'):
+            if compared_host.id == self.__reference_host.id:
+                logger.warning(f"Host {compared_host.id} comparado consigo mismo. Riesgo ignorado.")
+                return 0.0 
+
+        similarity = 1.0
+
         for comparator in self.__comparators:
-            similarity *= comparator.calc_partial_similarity(compared_host)
+            partial_similarity = comparator.calc_partial_similarity(compared_host)
 
-        # Multiply similarity by path type coefficient(s)
+            # Validación y limpieza del valor
+            if partial_similarity is None or math.isnan(partial_similarity) or math.isinf(partial_similarity):
+                logger.warning(f"Similitud inválida ({partial_similarity}) en {comparator.get_name()} — usando 0.0")
+                partial_similarity = 0.0
+
+            similarity *= partial_similarity
+
         if self.__config["path"]["apply"]:
             for path_type in compared_host.path_types:
-                similarity *= self.__path_coefficients[path_type]
+                coefficient = self.__path_coefficients.get(path_type, 1.0)
+                similarity *= coefficient
 
-        # Divide similarity by distance
-        return similarity / compared_host.distance
+        distance = compared_host.distance
+
+        if distance is None or distance <= 0:
+            logger.warning(f"Distancia inválida ({distance}) para host {compared_host.id}. Ajustando a 1.0")
+            distance = 1.0  # Valor mínimo forzado
+
+        if similarity is None or math.isnan(similarity) or math.isinf(similarity):
+            logger.warning(f"Similitud global inválida ({similarity}) — riesgo = 0.0")
+            return 0.0
+
+        risk_score = similarity / distance
+
+        if math.isnan(risk_score) or math.isinf(risk_score):
+            logger.warning(f"Riesgo inválido calculado (S={similarity}, D={distance}) => R={risk_score}")
+            return 0.0
+
+        return min(max(risk_score, 0.0), 100.0)

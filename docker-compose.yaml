@@ -7,7 +7,7 @@ services:
         # Password for authentication to neo4j-rest REST API
         VAULT_ACT_OVERSEER_PASSWORD: "password"
         # URL of neo4j-rest REST API | we are using Docker internal DNS resolving of each services
-        EXTERNAL_IP: "192.168.18.141"
+        EXTERNAL_IP: "${OBSERVE_IP}"
         # Form of localhost address - could be "localhost" or ::1, but for simplicity ipv4 loopback
         LOCALHOST: "127.0.0.1"
         # Port on which act will start - we will then use apache2 proxy to proxy requests without port
@@ -42,11 +42,11 @@ services:
         # Server name of component
         SERVER_NAME: "simulated-pao-firewall.local"
         # IP/Hostname of host where neo4j db is running
-        EXTERNAL_IP: "192.168.18.141"
+        EXTERNAL_IP: "${OBSERVE_IP}"
         # Password to the neo4j database
         VAULT_NEO4J_PASSWORD: "password"
         # This PAOs IP address to be written to neo4j db - the same as the docker container
-        PAO_IP: "192.168.18.141"
+        PAO_IP: "${ACT_COMPONENT_IP}"
         # PAO Name to be written into neo4j db
         PAO_NAME: "firewall"
         # Port on which the PAO will accept http requests
@@ -59,6 +59,16 @@ services:
         FREECAPACITY: "0"
     depends_on:
       - crusoe_act_overseer
+    environment:
+      - ALLOWED_HOSTS=localhost,127.0.0.1,155.54.98.9
+      - CSRF_TRUSTED_ORIGINS=155.54.98.9:15580
+#Modificacion agregada para el funcionamiento del firewall
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8086/firewall/capacity"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
     volumes:
       - vol_act_component:/app
     ports:
@@ -82,7 +92,8 @@ services:
       # Password to neo4j db is needed to be passed as ENV variable for the docker startup script
       - NEO4J_PASSWORD=password
     volumes:
-      - ./docker-volume-crusoe-observe:/var/lib/neo4j/data
+      - ./datasets:/datasets
+      - vol_observe:/var/lib/neo4j/data
     ports:
       # neo4j-rest debug port
       - "83:80"
@@ -104,7 +115,7 @@ services:
         # Port on which graphql service will be available
         GRAPHQL_SERVER_PORT: "4001"
         # Neo4j database URL
-        NEO4J_URL: "bolt://192.168.18.141:7687"
+        NEO4J_URL: "bolt://${OBSERVE_IP}:7687"
         NEO4J_USER: "neo4j"
         NEO4J_PASS: "password"
     environment:
@@ -123,17 +134,27 @@ services:
     build:
       context: ./crusoe_orient
       args:
-        NEO4J_REST_URL: "http://192.168.18.141/rest/"
+        #ACT_API_URL: "http://155.54.98.9:81/act
+        
+        NEO4J_REST_URL: "http://${HOST_IP}:83/rest/"
         # # URL Where Flower backend is available
-        FLOWER_URL: "http://192.168.18.141:5555/"
+        FLOWER_URL: "http://${HOST_IP}:5555/"
         # # URL Where act-overseer is available
-        ACT_API_URL: "http://192.168.18.141/act"
+        ACT_API_URL: "http://${HOST_IP}:8080/act"
         # # URL Where graphql is available
-        GRAPHQL_URL: "http://192.168.18.141:4001/graphql"
+        GRAPHQL_URL: "http://${HOST_IP}:15541/graphql"
         # # URL Where the simulated firewall is available
-        FIREWALL_PAO_URL: "http://192.168.18.141:8086/firewall"
+        FIREWALL_PAO_URL: "http://${HOST_IP}:8086/firewall"
         # # RECOMMENDER
-        RECOMMENDER_API: "http://192.168.18.141:16005/recommender"
+        RECOMMENDER_API: "http://${HOST_IP}:16005/"
+        
+        #NEO4J_REST_URL: "/rest/"
+        #ACT_API_URL: "/act/"
+        #GRAPHQL_URL: "/graphql"
+        #FIREWALL_PAO_URL: "/firewall"
+        #RECOMMENDER_API: "/recommender"   
+        #FLOWER_URL: "/flower"            
+
     ports:
       - "80:80"
     volumes:
@@ -146,13 +167,14 @@ services:
     build:
       context: recommender_system
     environment:
-      NEO4J_URL: "bolt://192.168.18.141:7687"
+      NEO4J_URL: "bolt://${OBSERVE_IP}:7687"
       NEO4J_USER: "neo4j"
       NEO4J_PASS: "password"
     ports:
       - "16005:8000"
     volumes:
-      - vol_recommender:/app
+    - ./recommender_system:/app
+    - ./logs/recommender.log:/app/src/backend/recommender.log  
     networks:
       bridge_crusoe:
         ipv4_address: 172.28.0.8

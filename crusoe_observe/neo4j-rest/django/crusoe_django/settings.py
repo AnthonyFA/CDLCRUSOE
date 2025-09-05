@@ -26,9 +26,7 @@ SECRET_KEY = 'q(8%tl#o+3q%n3pt1uq0u-+s%umv1pfo4!&2(wi*!l#qny5sou'
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'crusoe-worker.csirt.muni.cz',
-    'crusoe.csirt.muni.cz',
-    '147.251.14.47',
+    '155.54.98.9',
     'localhost',
     '127.0.0.1',
     '::1',
@@ -92,7 +90,7 @@ DATABASES = {
 NEO4J_DATABASES = {
     'default': {
         'HOST': 'localhost',
-        'PORT': 7473,
+        'PORT': 7474,
         'ENDPOINT': '/db/data'
     }
 }

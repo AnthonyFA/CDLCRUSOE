@@ -4,7 +4,7 @@ export const environment = {
   applicationName: 'CRUSOE Dashboard',
   production: true,
   version: packageData.version,
-  /* Base url - former RedirectAPI url apiUrl*/
+  /* Base url - former RedirectAPI url baseURL*/
   baseUrl: 'http://localhost/',
   /* Flower API URL */
   flowerUrl: 'http://localhost:5555/',
@@ -15,5 +15,5 @@ export const environment = {
   /* Firewall API URL */
   firewallApi: 'http://localhost/firewall',
   /* Recommended system API URL */
-  recommenderApi: 'http://127.0.0.1:16005/',
+  recommenderApi: 'http://localhost:16005/recommender',
 };

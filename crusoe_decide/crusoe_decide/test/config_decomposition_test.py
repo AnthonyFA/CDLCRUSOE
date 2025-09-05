@@ -29,8 +29,8 @@ class DecompositionTestCase(unittest.TestCase):
 
         :return:
         """
-        mission_client = MissionAndComponentClient(password="ne04jcrus03")
-        rest_client = RESTClient(password="ne04jcrus03")
+        mission_client = MissionAndComponentClient(password="password")
+        rest_client = RESTClient(password="password")
 
         with open(MISSION_FILE, "r") as json_file:
             data = json.load(json_file)

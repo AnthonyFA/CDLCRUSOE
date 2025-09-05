@@ -15,7 +15,7 @@ class TestClient(CVEConnectorClient, RESTClient):
     def __init__(self, bolt="bolt://localhost:7687", user="neo4j", password=None, lifetime=120):
         self._user = user
         self._driver = GraphDatabase.driver(bolt, auth=basic_auth(user, password),
-                                            max_connection_lifetime=lifetime, encrypted=True)
+                                            max_connection_lifetime=lifetime, encrypted=False)
         super().__init__(driver=self._driver, password=password)
 
     def delete_all(self):

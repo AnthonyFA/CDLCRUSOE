@@ -37,31 +37,36 @@ class AttackGraphClient(AbstractClient):
         super().__init__(password=password, **kwargs)
 
     def get_exploitability(self, cve_id):
-        """
-        Return exploitability score of CVE.
-
-        :param cve_id: ID of CVE
-        :return:
-        """
-        # 8.22 * AV * AC * PR * UI - maximal value is 3.887 - to get interval (0, 1)
-        # we need coefficient 8.22 / 3.887
         cve = self._run_query("MATCH (cve:CVE {CVE_id: $cve_id}) "
-                              "RETURN {attack_vector: cve.attack_vector, "
-                              "attack_complexity: cve.attack_complexity, "
-                              "privileges_required: cve.privileges_required, "
-                              "user_interaction: cve.user_interaction, "
-                              "scope:cve.scope} AS cve",
-                              **{'cve_id': cve_id}).single()['cve']
-        if cve['scope'] == "CHANGED":
-            return 2.1147 * ATTACK_VECTOR[cve['attack_vector']] * \
-                   ATTACK_COMPLEXITY[cve['attack_complexity']] * \
-                   PRIVILEGES_REQUIRED_SCOPE_CHANGED[cve['privileges_required']] * \
-                   USER_INTERACTION[cve['user_interaction']]
-        else:
-            return 2.1147 * ATTACK_VECTOR[cve['attack_vector']] * \
-                   ATTACK_COMPLEXITY[cve['attack_complexity']] * \
-                   PRIVILEGES_REQUIRED[cve['privileges_required']] * \
-                   USER_INTERACTION[cve['user_interaction']]
+                            "RETURN {attack_vector: cve.attack_vector, "
+                            "attack_complexity: cve.attack_complexity, "
+                            "privileges_required: cve.privileges_required, "
+                            "user_interaction: cve.user_interaction, "
+                            "scope:cve.scope} AS cve",
+                            **{'cve_id': cve_id}).single()
+        if not cve or not cve['cve']:
+            # Loggear el error y devolver un valor por defecto seguro
+            return 0.5  # O el valor que consideres seguro
+
+        cve = cve['cve']
+        try:
+            av = ATTACK_VECTOR[cve['attack_vector']]
+            ac = ATTACK_COMPLEXITY[cve['attack_complexity']]
+            if cve['scope'] == "CHANGED":
+                pr = PRIVILEGES_REQUIRED_SCOPE_CHANGED[cve['privileges_required']]
+            else:
+                pr = PRIVILEGES_REQUIRED[cve['privileges_required']]
+            ui = USER_INTERACTION[cve['user_interaction']]
+        except KeyError as e:
+            # Loggear el error y devolver un valor por defecto seguro
+            return 0.5
+
+        score = 2.1147 * av * ac * pr * ui
+        # Validar que el score esté en el rango [0,1]
+        if not isinstance(score, (int, float)) or score < 0 or score > 1 or score != score:
+            return 0.5
+        return score
+
 
     def get_attack_vector(self, cve_id):
         """
@@ -96,7 +101,7 @@ class AttackGraphClient(AbstractClient):
             "MATCH (cve:CVE {CVE_id: $cve_id}) "
             "RETURN cve.attack_complexity AS attack_complexity",
             **{'cve_id': cve_id}).single()['attack_complexity']
-
+    
     def get_permission_to_host(self, hostname):
         """
         Return permission which are stored in the DB for the host specified by the hostname.

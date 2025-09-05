@@ -19,27 +19,27 @@ describe('DecideService', () => {
 
   it('should call http endpoint', () => {
     service.getPaos();
-    expect(httpClientSpy.get).toHaveBeenCalledOnceWith(environment.apiUrl + 'rest/' + 'act/paos');
+    expect(httpClientSpy.get).toHaveBeenCalledOnceWith(environment.baseUrl + 'rest/' + 'act/paos');
 
     service.getMissions();
-    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.apiUrl + 'rest/' + 'missions');
+    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.baseUrl + 'rest/' + 'missions');
 
     service.getMissionConfigurations('5');
-    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.apiUrl + 'rest/' + 'mission/' + '5' + '/configurations');
+    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.baseUrl + 'rest/' + 'mission/' + '5' + '/configurations');
 
     service.getConfigurationHosts('test', 2);
     expect(httpClientSpy.get).toHaveBeenCalledWith(
-      environment.apiUrl + 'rest/' + 'mission/' + 'test' + '/configuration/' + 2 + '/hosts'
+      environment.baseUrl + 'rest/' + 'mission/' + 'test' + '/configuration/' + 2 + '/hosts'
     );
 
     service.getPaoMaxCapacity('test');
-    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.apiUrl + 'rest/' + 'act/' + 'test' + '/maxCapacity');
+    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.baseUrl + 'rest/' + 'act/' + 'test' + '/maxCapacity');
 
     service.getPaoUsedCapacity('test');
-    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.apiUrl + 'rest/' + 'act/' + 'test' + '/usedCapacity');
+    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.baseUrl + 'rest/' + 'act/' + 'test' + '/usedCapacity');
 
     service.getPaoStatus('test');
-    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.apiUrl + 'rest/' + 'act/' + 'test' + '/status');
+    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.baseUrl + 'rest/' + 'act/' + 'test' + '/status');
 
     service.getSecurityThreshold();
     expect(httpClientSpy.get).toHaveBeenCalledWith(environment.tmpActApi + 'treshold');
@@ -68,7 +68,7 @@ describe('DecideService', () => {
     expect(httpClientSpy.get).toHaveBeenCalledWith(environment.tmpActApi + 'log');
 
     service.getMission('test');
-    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.apiUrl + 'rest/' + 'missions/' + 'test');
+    expect(httpClientSpy.get).toHaveBeenCalledWith(environment.baseUrl + 'rest/' + 'missions/' + 'test');
 
     service.getBlockedIPS();
     expect(httpClientSpy.get).toHaveBeenCalledWith(environment.firewallApi + '/blocked');

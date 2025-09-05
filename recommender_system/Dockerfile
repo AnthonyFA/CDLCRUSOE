@@ -10,6 +10,9 @@ RUN curl -sSL https://install.python-poetry.org | python3 - && \
     python -m venv /venv
 
 COPY . .
+
+COPY ./src/recommender/risk_calculator.py /app/src/recommender/risk_calculator.py
+
 RUN . /venv/bin/activate && pip install -e .
 
 FROM python:3.12-slim-bookworm AS runtime

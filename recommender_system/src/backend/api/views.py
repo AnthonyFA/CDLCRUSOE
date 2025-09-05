@@ -1,4 +1,5 @@
 import logging
+import sys
 from json import load, dumps
 from os.path import exists
 
@@ -17,16 +18,18 @@ from django.core.files.storage import default_storage
 
 def get_logger():
     """
-    Initializes logger for logging in file recommender.log.
+    Initializes logger to output to stdout instead of a file.
     :return: Initialized logger
     """
     logger = logging.getLogger("neo4j")
-    logger.setLevel(20)
-    file_handler = logging.FileHandler(settings.LOG)
+    logger.setLevel(logging.INFO)
+
+    # Use stdout handler instead of file
+    handler = logging.StreamHandler(sys.stdout)
     log_format = "[%(levelname)s] - %(asctime)s - %(name)s - : %(message)s"
-    file_handler.setFormatter(logging.Formatter(log_format))
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
+    handler.setFormatter(logging.Formatter(log_format))
+    logger.addHandler(handler)
+
     return logger
 
 
@@ -40,6 +43,7 @@ def get_db_client():
                        settings.DATABASES['default']['USER'],
                        settings.DATABASES['default']['PASSWORD'],
                        get_logger())
+
 
 
 def initialize_recommender(ip, domain, db_client):
@@ -96,6 +100,10 @@ def attacked_host(request):
         try:
             ip, domain = parse_query_params(request.query_params)
             recommend = initialize_recommender(ip, domain, db_client)
+
+            if recommend.attacked_host is None:
+                return JsonResponse({"error": "Attacked host not found"}, status=404)
+
         except (ValueError, IOError) as e:
             return JsonResponse({"error": {"message": str(e)}}, status=400)
 
@@ -104,22 +112,24 @@ def attacked_host(request):
 
 @api_view(["GET"])
 def recommended_hosts(request):
-    """
-    View for recommending similar hosts. Requires IP or domain of the attacked
-    host as a query parameter.
-    :param request: REST framework request
-    :return: JsonResponse containing recommended hosts in JSON
-    """
     with get_db_client() as db_client:
         try:
             ip, domain = parse_query_params(request.query_params)
             recommend = initialize_recommender(ip, domain, db_client)
+            
+            if not recommend:
+                return JsonResponse({"error": "Recommender initialization failed"}, status=500)
+            
+            recommend.recommend_hosts()
+            
+            if not recommend.host_list:
+                return JsonResponse({"error": "No recommended hosts found"}, status=404)
+
         except (ValueError, IOError) as e:
             return JsonResponse({"error": {"message": str(e)}}, status=400)
 
-        recommend.recommend_hosts()
-
     return JsonResponse(recommend.host_list, safe=False, encoder=Encoder)
+
 
 
 @api_view(["GET", "PUT", "PATCH"])

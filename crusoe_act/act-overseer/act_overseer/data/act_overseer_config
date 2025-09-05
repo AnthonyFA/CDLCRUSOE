@@ -1,7 +1,8 @@
 {
   "security_treshold": 50,
   "log_path": "/var/log/crusoe/",
-  "user": "user",
-  "password": "pass",
-  "server_url": "https://crusoe.csirt.muni.cz"
+  "user": "neo4j",
+  "password": "password",
+  "server_url": "http://155.54.98.9:15580"
+ 
 }

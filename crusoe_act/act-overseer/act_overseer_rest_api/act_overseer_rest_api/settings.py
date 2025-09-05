@@ -27,12 +27,10 @@ DEBUG = True
 
 ## TODO Add 0.0.0.0 to allow communication for localhost
 ALLOWED_HOSTS = [
-    'crusoe-worker.csirt.muni.cz',
-    'crusoe.csirt.muni.cz',
-    '147.251.14.47',
     'localhost',
     '127.0.0.1',
     '::1',
+    '155.54.98.9',
     '0.0.0.0'
 ]
 

@@ -35,34 +35,66 @@ USER_INTERACTION = {
 class AttackGraphClient(AbstractClient):
     def __init__(self, password, **kwargs):
         super().__init__(password=password, **kwargs)
+    """
+        def get_exploitability(self, cve_id):
+    
+            Return exploitability score of CVE.
 
+            :param cve_id: ID of CVE
+            :return:
+    
+            cve = self._run_query(...).single()
+            if not cve or 'cve' not in cve:
+                return 0.0  
+            
+
+            # 8.22 * AV * AC * PR * UI - maximal value is 3.887 - to get interval (0, 1)
+            # we need coefficient 8.22 / 3.887
+            cve = self._run_query("MATCH (cve:CVE {CVE_id: $cve_id}) "
+                                "RETURN {attack_vector: cve.attack_vector, "
+                                "attack_complexity: cve.attack_complexity, "
+                                "privileges_required: cve.privileges_required, "
+                                "user_interaction: cve.user_interaction, "
+                                "scope:cve.scope} AS cve",
+                                **{'cve_id': cve_id}).single()['cve']
+            if cve['scope'] == "CHANGED":
+                return 2.1147 * ATTACK_VECTOR[cve['attack_vector']] * \
+                    ATTACK_COMPLEXITY[cve['attack_complexity']] * \
+                    PRIVILEGES_REQUIRED_SCOPE_CHANGED[cve['privileges_required']] * \
+                    USER_INTERACTION[cve['user_interaction']]
+            else:
+                return 2.1147 * ATTACK_VECTOR[cve['attack_vector']] * \
+                    ATTACK_COMPLEXITY[cve['attack_complexity']] * \
+                    PRIVILEGES_REQUIRED[cve['privileges_required']] * \
+                    USER_INTERACTION[cve['user_interaction']]
+            
+    """
     def get_exploitability(self, cve_id):
-        """
-        Return exploitability score of CVE.
+        cve = self._run_query(...).single()
+        if not cve or 'cve' not in cve:
+            return 0.0  # o usar EPSILON
 
-        :param cve_id: ID of CVE
-        :return:
-        """
-        # 8.22 * AV * AC * PR * UI - maximal value is 3.887 - to get interval (0, 1)
-        # we need coefficient 8.22 / 3.887
-        cve = self._run_query("MATCH (cve:CVE {CVE_id: $cve_id}) "
-                              "RETURN {attack_vector: cve.attack_vector, "
-                              "attack_complexity: cve.attack_complexity, "
-                              "privileges_required: cve.privileges_required, "
-                              "user_interaction: cve.user_interaction, "
-                              "scope:cve.scope} AS cve",
-                              **{'cve_id': cve_id}).single()['cve']
-        if cve['scope'] == "CHANGED":
-            return 2.1147 * ATTACK_VECTOR[cve['attack_vector']] * \
-                   ATTACK_COMPLEXITY[cve['attack_complexity']] * \
-                   PRIVILEGES_REQUIRED_SCOPE_CHANGED[cve['privileges_required']] * \
-                   USER_INTERACTION[cve['user_interaction']]
-        else:
-            return 2.1147 * ATTACK_VECTOR[cve['attack_vector']] * \
-                   ATTACK_COMPLEXITY[cve['attack_complexity']] * \
-                   PRIVILEGES_REQUIRED[cve['privileges_required']] * \
-                   USER_INTERACTION[cve['user_interaction']]
+        cve = cve['cve']
 
+        try:
+            av = ATTACK_VECTOR.get(cve['attack_vector'], 0.0)
+            ac = ATTACK_COMPLEXITY.get(cve['attack_complexity'], 0.0)
+            ui = USER_INTERACTION.get(cve['user_interaction'], 0.0)
+
+            
+            scope = cve.get('scope', '')
+
+            if scope == "CHANGED":
+                pr = PRIVILEGES_REQUIRED_SCOPE_CHANGED.get(cve['privileges_required'], 0.0)
+            else:
+                pr = PRIVILEGES_REQUIRED.get(cve['privileges_required'], 0.0)
+
+            exploitability = 2.1147 * av * ac * pr * ui
+            return max(exploitability, 1e-6)  # evitar cero exacto
+        except Exception as e:
+            print(f"[WARN] Failed to compute exploitability for {cve_id}: {e}")
+            return 1e-6
+    
     def get_attack_vector(self, cve_id):
         """
         Return attack vector of CVE.

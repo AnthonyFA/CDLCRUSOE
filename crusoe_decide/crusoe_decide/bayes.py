@@ -66,7 +66,7 @@ def convert_attack_graph_to_bayesian(arcs_file, vertices_file, client, logger):
     return infer_final_probability(attack_graph_model, conf_goal, integ_goal,
                                    avail_goal, logger=logger)
 
-
+EPSILON = 1e-6 
 def infer_final_probability(bayesian_model, conf_goal, integ_goal, avail_goal, logger):
     """
     Function infers final probability for the triple (C, I, A) - confidentiality, integrity
@@ -82,20 +82,24 @@ def infer_final_probability(bayesian_model, conf_goal, integ_goal, avail_goal, l
     """
     logger.info("Probability inference started.")
     infer = VariableElimination(bayesian_model)
-    if conf_goal is not None:
-        conf_prob = infer.query([conf_goal])[conf_goal].values[1]
-    else:
-        conf_prob = 0.0
-    if integ_goal is not None:
-        integ_prob = infer.query([integ_goal])[integ_goal].values[1]
-    else:
-        integ_prob = 0.0
-    if avail_goal is not None:
-        avail_prob = infer.query([avail_goal])[avail_goal].values[1]
-    else:
-        avail_prob = 0.0
+
+    def safe_query(goal):
+        if goal is None:
+            return 0.0
+        try:
+            prob = infer.query([goal])[goal].values[1]
+            return max(prob, EPSILON)  # evita prob = 0 exacto
+        except Exception as e:
+            logger.warning(f"Inference failed for node {goal}: {e}")
+            return EPSILON
+
+    conf_prob = safe_query(conf_goal)
+    integ_prob = safe_query(integ_goal)
+    avail_prob = safe_query(avail_goal)
+
     logger.info("Probability inference ended.")
     return conf_prob, integ_prob, avail_prob
+
 
 
 def create_bayesian_model(client, incidence_list, nodes_dict, logger):

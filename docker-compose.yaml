@@ -61,7 +61,7 @@ services:
       - crusoe_act_overseer
     environment:
       - ALLOWED_HOSTS=localhost,127.0.0.1,155.54.98.9
-      - CSRF_TRUSTED_ORIGINS=155.54.98.9:15580
+      - CSRF_TRUSTED_ORIGINS=http://155.54.98.9:15580
 #Modificacion agregada para el funcionamiento del firewall
     healthcheck:
       test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8086/firewall/capacity"]
@@ -136,7 +136,7 @@ services:
       args:
         #ACT_API_URL: "http://155.54.98.9:81/act
         
-        NEO4J_REST_URL: "http://${HOST_IP}:83/rest/"
+        NEO4J_REST_URL: "http://${HOST_IP}:83/"
         # # URL Where Flower backend is available
         FLOWER_URL: "http://${HOST_IP}:5555/"
         # # URL Where act-overseer is available
@@ -148,7 +148,7 @@ services:
         # # RECOMMENDER
         RECOMMENDER_API: "http://${HOST_IP}:16005/"
         
-        #NEO4J_REST_URL: "/rest/"
+        #NEO4J_REST_URL: "/rest"
         #ACT_API_URL: "/act/"
         #GRAPHQL_URL: "/graphql"
         #FIREWALL_PAO_URL: "/firewall"

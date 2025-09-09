@@ -28,4 +28,3 @@ FROM nginx
 COPY ./docker-config/dashboard.conf /etc/nginx/nginx.conf
 COPY --from=build /usr/src/app/dist /usr/share/nginx/html
 RUN echo $RECOMMENDER_API
-

@@ -8,19 +8,25 @@ import { environment } from 'src/environments/environment';
 export class ApiInterceptor implements HttpInterceptor {
   constructor(private oauthService: OAuthService) {}
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Check if request is going to Redirect-API URL, if so add oidc access_token
-    if (req.url.indexOf(environment.baseUrl) > -1 || req.url.indexOf(environment.graphqlApi) > -1) {
-      const access_token = this.oauthService.getAccessToken();
-      const authHeader = `Bearer ${access_token}`;
+  private needsAuth(url: string): boolean {
+    return url.startsWith(environment.baseUrl)       
+        || url.startsWith(environment.graphqlApi)    
+        || url.startsWith(environment.tmpActApi)    
+        || url.startsWith(environment.firewallApi);  
+  }
 
-      const newReq = req.clone({
-        setHeaders: {
-          Authorization: authHeader,
-        },
-      });
-      return next.handle(newReq);
+  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+    let cloned = req;
+
+    if (this.needsAuth(req.url)) {
+      const token = this.oauthService.getAccessToken();
+      if (token) {
+        cloned = req.clone({
+          setHeaders: { Authorization: `Bearer ${token}` },
+        });
+      }
     }
-    return next.handle(req);
+
+    return next.handle(cloned);
   }
 }

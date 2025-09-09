@@ -4,16 +4,31 @@ export const environment = {
   applicationName: 'CRUSOE Dashboard',
   production: true,
   version: packageData.version,
-  /* Base url - former RedirectAPI url baseURL*/
+
+
+  baseUrl: '/rest/',
+  
+  graphqlApi: '/graphql',
+
+  tmpActApi: '/act/',
+
+  firewallApi: '/firewall',
+
+  recommenderApi: '/recommender/',
+
+  flowerUrl: '/flower/',
+  
+  /* Base url - former RedirectAPI url baseURL
   baseUrl: 'http://localhost/',
-  /* Flower API URL */
+  /* Flower API URL 
   flowerUrl: 'http://localhost:5555/',
-  /* Act API URL */
+  /* Act API URL 
   tmpActApi: 'http://localhost/act/',
-  /* GraphQL API URL */
+  /* GraphQL API URL 
   graphqlApi: 'http://localhost:4001/graphql',
-  /* Firewall API URL */
+  /* Firewall API URL 
   firewallApi: 'http://localhost/firewall',
-  /* Recommended system API URL */
+  /* Recommended system API URL 
   recommenderApi: 'http://localhost:16005/recommender',
+  */
 };

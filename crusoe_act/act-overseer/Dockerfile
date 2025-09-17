@@ -77,11 +77,11 @@ RUN apt-get update && apt-get install -y \
 # Preparar directorios
 RUN mkdir -p /usr/share/man/man1
 
-
+# Descargar y descomprimir MULVAL
 ADD https://people.cs.ksu.edu/~xou/argus/software/mulval/mulval_1_1.tar.gz /opt/mulval_1_1.tar.gz
 RUN tar -xzvf /opt/mulval_1_1.tar.gz -C /opt/
 
-
+# Descargar y descomprimir XSB
 ADD http://xsb.sourceforge.net/downloads/XSB.tar.gz /opt/XSB.tar.gz
 RUN tar -xzvf /opt/XSB.tar.gz -C /opt/
 

@@ -136,28 +136,27 @@ services:
       args:
         #ACT_API_URL: "http://155.54.98.9:81/act
         
-        #NEO4J_REST_URL: "http://${HOST_IP}:83/"
+        NEO4J_REST_URL: "http://${HOST_IP}:83/"
         # # URL Where Flower backend is available
-        #FLOWER_URL: "http://${HOST_IP}:5555/"
+        FLOWER_URL: "http://${HOST_IP}:5555/"
         # # URL Where act-overseer is available
-        #ACT_API_URL: "http://${HOST_IP}:8080/act"
+        ACT_API_URL: "http://${HOST_IP}:8080/act"
         # # URL Where graphql is available
-        #GRAPHQL_URL: "http://${HOST_IP}:15541/graphql"
+        GRAPHQL_URL: "http://${HOST_IP}:15541/graphql"
         # # URL Where the simulated firewall is available
-        #FIREWALL_PAO_URL: "http://${HOST_IP}:8086/firewall"
+        FIREWALL_PAO_URL: "http://${HOST_IP}:8086/firewall"
         # # RECOMMENDER
-        #RECOMMENDER_API: "http://${HOST_IP}:16005/"
+        RECOMMENDER_API: "http://${HOST_IP}:16005/"
         
-        NEO4J_REST_URL: "/rest/"
-        ACT_API_URL: "/act/"
-        GRAPHQL_URL: "/graphql/"
-        FIREWALL_PAO_URL: "/firewall/"
-        RECOMMENDER_API: "/recommender/"   
-        FLOWER_URL: "/flower/"            
+        #NEO4J_REST_URL: "/rest"
+        #ACT_API_URL: "/act/"
+        #GRAPHQL_URL: "/graphql"
+        #FIREWALL_PAO_URL: "/firewall"
+        #RECOMMENDER_API: "/recommender"   
+        #FLOWER_URL: "/flower"            
 
     ports:
       - "80:80"
-      - "15580:80"
     volumes:
       - vol_orient:/app
     networks:
@@ -193,4 +192,5 @@ networks:
     driver: bridge
     ipam:
       config:
+        # We do not need more than 5 IPs so small /29 subnet is sufficient
         - subnet: 172.28.0.0/28

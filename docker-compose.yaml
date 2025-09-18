@@ -18,6 +18,9 @@ services:
       - crusoe_graphql
     volumes:
       - vol_act_overseer:/app
+      - act_data:/var/lib/act_overseer
+    environment:
+      - ACT_OVERSEER_DATA_DIR=/var/lib/act_overseer
     ports:
       - "81:80"
       - "8080:8080"
@@ -50,25 +53,33 @@ services:
         # PAO Name to be written into neo4j db
         PAO_NAME: "firewall"
         # Port on which the PAO will accept http requests
-        PORTNUMBER: "8080"
+        PORTNUMBER: "8086"
         # Max capacity of PAO
-        MAXCAPACITY: "0"
+        MAXCAPACITY: "10"
         # Current used capacity of PAO
         USEDCAPACITY: "0"
         # Current not used capacity of PAO
-        FREECAPACITY: "0"
+        FREECAPACITY: "10"
     depends_on:
       - crusoe_act_overseer
     environment:
       - ALLOWED_HOSTS=localhost,127.0.0.1,155.54.98.9
       - CSRF_TRUSTED_ORIGINS=http://155.54.98.9:15580
 #Modificacion agregada para el funcionamiento del firewall
+    #healthcheck:
+    #  test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8086/firewall/capacity"]
+    #  interval: 10s
+    #  timeout: 5s
+    #  retries: 10
+    #  start_period: 30s
+
     healthcheck:
-      test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8086/firewall/capacity"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8086/firewall/capacity >/dev/null || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
+
     volumes:
       - vol_act_component:/app
     ports:
@@ -157,6 +168,7 @@ services:
 
     ports:
       - "80:80"
+      - "15580:80" #Añadido el 17/09
     volumes:
       - vol_orient:/app
     networks:
@@ -186,7 +198,7 @@ volumes:
   vol_orient:
   vol_graphql:
   vol_recommender:
-
+  act_data: 
 networks:
   bridge_crusoe:
     driver: bridge

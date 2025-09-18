@@ -5,6 +5,10 @@ import firewall_wrapper_project.views as views
 urlpatterns = [
     path('health', views.FwHealthCheck.as_view(), name="health_check"),
     path('capacity', views.FwCapacity.as_view(), name="capacity"),
+    path('liveness', views.FwLiveness.as_view()),
+    path('maxCapacity', views.FwMaxCapacity.as_view()),
+    path('usedCapacity', views.FwUsedCapacity.as_view()),
+    path('freeCapacity', views.FwFreeCapacity.as_view()),
     path('blocked', views.FwBlockedList.as_view(), name="blocked"),
     path('blocked/<int:blocked_id>', views.FwBlockedId.as_view(), name="blocked_id"),
     path('blocked/<int:blocked_id>/port', views.FwBlockedIdPort.as_view(), name="blocked_id_port"),

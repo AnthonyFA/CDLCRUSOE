@@ -18,6 +18,32 @@ SERVICE_UNAVAILABLE_MSG = "Service unavailable!"
 FUNCTION_NOT_SUPPORTED_MSG = "Function not supported!"
 PATH = '/var/www/simulated-pao-firewall/firewall_wrapper_project/simulated-pao-firewall'
 
+from django.http import HttpResponse
+
+class FwLiveness(RetrieveAPIView):
+    def get(self, request, **kwargs):
+        return HttpResponse("OK alive", content_type="text/plain") \
+               if os.path.exists(PATH) else HttpResponse("KO", status=503)
+
+class FwMaxCapacity(RetrieveAPIView):
+    def get(self, request, **kwargs):
+        with open(PATH) as f:
+            cap = json.load(f)['maxCapacity']
+        return HttpResponse(f"OK {cap}", content_type="text/plain")
+
+class FwUsedCapacity(RetrieveAPIView):
+    def get(self, request, **kwargs):
+        with open(PATH) as f:
+            data = json.load(f)
+        used = len(data['blacklist'])
+        return HttpResponse(f"OK {used}", content_type="text/plain")
+
+class FwFreeCapacity(RetrieveAPIView):
+    def get(self, request, **kwargs):
+        with open(PATH) as f:
+            data = json.load(f)
+        free = data['maxCapacity'] - len(data['blacklist'])
+        return HttpResponse(f"OK {free}", content_type="text/plain")
 
 class FwHealthCheck(RetrieveAPIView):
     """

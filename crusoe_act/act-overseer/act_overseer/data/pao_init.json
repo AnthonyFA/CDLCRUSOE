@@ -37,11 +37,11 @@
 		},
 		{
 			"pao": "firewall",
-			"ip": "147.251.14.46",
-			"port": "8081",
-			"maxCapacity": 0,
+			"ip": "155.54.98.9",
+			"port": "1551",
+			"maxCapacity": 10,
 			"usedCapacity": 0,
-			"freeCapacity": 0,
+			"freeCapacity": 10,
 			"lastContact": null
 		}
 	]

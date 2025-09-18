@@ -7,7 +7,7 @@ import logging
 import requests
 import unittest
 
-# Configuración mínima necesaria para las nuevas signaturas de función
+
 dashboard_log = Mock()  # Mock object para dashboard_log
 firewall_ip_and_port = "155.54.98.9:8086"  # IP y puerto de tu firewall basado en Docker config
 
@@ -36,8 +36,8 @@ test_hosts = [{'host': {'avail': 0.7, 'hostname': 'collector2.csirt.muni.cz', 'c
               {'host': {'avail': 0.8, 'hostname': 'flowmon-rect-law-sci', 'conf': 0.86, 'integ': 0.87, 'ip_address': '10.0.117.132'}},
               {'host': {'avail': 0.5, 'hostname': 'flowmon-rect-ukb', 'conf': 0.0, 'integ': 0.0, 'ip_address': '10.0.117.130'}}]
 
-# URL corregida para tu entorno
-URL = 'http://155.54.98.9:8086'  # Cambiado de crusoe-worker.csirt.muni.cz:8081
+
+URL = 'http://155.54.98.9:8086' 
 
 class DecideToActTest(unittest.TestCase):
 

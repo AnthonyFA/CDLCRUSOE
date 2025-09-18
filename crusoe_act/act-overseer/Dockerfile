@@ -51,13 +51,12 @@ RUN sed -i 's/"user",/"crusoe",/' /usr/local/lib/python3.7/dist-packages/act_ove
     sed -i 's/"pass",/"'"$VAULT_ACT_OVERSEER_PASSWORD"'",/' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config && \
     sed -i 's|"https://crusoe.csirt.muni.cz"|"'"$EXTERNAL_IP"'"|' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config
 
-# Crear y dar permisos a los logs necesarios
 RUN mkdir -p /var/log/crusoe && \
   touch /var/log/crusoe/act_overseer_rest_api.log /var/log/crusoe/act_decide_to_act.log && \
   chmod 0666 /var/log/crusoe/*.log && \
   cp -r /tmp/act-overseer/act_overseer_rest_api /var/www/ && \
-  chown -R www-data:www-data /var/www/act_overseer_rest_api
-
+  chown -R www-data:www-data /var/www/act_overseer_rest_api && \
+  chown -R www-data:www-data /var/lib/act_overseer
 # Instalar dependencias del componente DECIDE (Neo4j, Mulval, etc.)
 RUN pip3 install neo4j-driver==5.0 pytest neo4j
 

@@ -63,8 +63,8 @@ services:
     depends_on:
       - crusoe_act_overseer
     environment:
-      - ALLOWED_HOSTS=localhost,127.0.0.1,155.54.98.9
-      - CSRF_TRUSTED_ORIGINS=http://155.54.98.9:15580
+      - ALLOWED_HOSTS=localhost,127.0.0.1,155.54.180.23
+      - CSRF_TRUSTED_ORIGINS=http://155.54.180.23:15580
 #Modificacion agregada para el funcionamiento del firewall
     #healthcheck:
     #  test: ["CMD", "wget", "--spider", "--quiet", "http://localhost:8086/firewall/capacity"]
@@ -145,7 +145,7 @@ services:
     build:
       context: ./crusoe_orient
       args:
-        #ACT_API_URL: "http://155.54.98.9:81/act
+        #ACT_API_URL: "http://155.54.180.23:81/act
         
         NEO4J_REST_URL: "http://${HOST_IP}:83/"
         # # URL Where Flower backend is available

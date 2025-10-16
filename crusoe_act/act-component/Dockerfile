@@ -1,96 +1,104 @@
-# Use Debian 10 as the base image
+# Use an official Debian image as a base
 FROM debian:10
 
-# SHELL ["/bin/bash", "-c"]
+# Correcciones de fuentes obsoletas en Debian 10
 RUN sed -i 's|http://deb.debian.org/debian|http://archive.debian.org/debian|g' /etc/apt/sources.list && \
-    sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list && \
-    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+sed -i 's|http://security.debian.org/debian-security|http://archive.debian.org/debian-security|g' /etc/apt/sources.list && \
+echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
 
-# Install Apache, Python, and other dependencies
-RUN apt-get update && \
-  apt-get install -y netcat vim apache2 libapache2-mod-wsgi-py3 python3-pip python2 curl software-properties-common && \
-  a2enmod wsgi proxy_http && \
-  update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2 && \
-  update-alternatives --install /usr/bin/python python /usr/bin/python2 1 && \
-  apt-get clean && \
-  rm -rf /var/lib/apt/lists/*
-
-# Update Debian repository URLs to support archive backports
-RUN sed -i 's|deb https://deb.debian.org/debian buster-backports main|deb https://archive.debian.org/debian buster-backports main|g' /etc/apt/sources.list \
-  && sed -i 's|deb-src https://deb.debian.org/debian buster-backports main|deb-src https://archive.debian.org/debian buster-backports main|g' /etc/apt/sources.list
-
-# Set Python3.7 as the default Python
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2 \
-  && update-alternatives --install /usr/bin/python python /usr/bin/python2 1
-
-# Define build argument and environment variable
-ARG PROXY_URL="http://127.0.0.1"
-ARG PORT_NUMBER="8086"
-ARG URL_PATH="firewall"
-ARG DST_WRAPPER="simulated-pao-firewall"
-ARG WRAPPER="firewall_wrapper"
-ARG SERVER_NAME="simulated-pao-firewall.local"
+# Argumentos configurables
+ARG VAULT_ACT_OVERSEER_PASSWORD="default_password"
 ARG EXTERNAL_IP="127.0.0.1"
-ARG VAULT_NEO4J_PASSWORD="password"
-ARG PAO_IP="localhost"
-ARG PAO_NAME="firewall"
-ARG PORTNUMBER="8080"
-ARG MAXCAPACITY="0"
-ARG USEDCAPACITY="0"
-ARG FREECAPACITY="0"
+ARG LOCALHOST="127.0.0.1"
+ARG PORT_NUMBER="8080"
+ARG SERVER_NAME="crusoe.act-overseer.local"
 
-RUN pip3 install requests structlog django djangorestframework
+# Instalación de Apache y dependencias Python
+RUN apt-get update && \
+apt-get install -y apache2 libapache2-mod-wsgi-py3 python3-pip python2 curl && \
+a2enmod wsgi proxy proxy_http && \
+update-alternatives --install /usr/bin/python python /usr/bin/python3.7 2 && \
+update-alternatives --install /usr/bin/python python /usr/bin/python2 1 && \
+apt-get clean && \
+rm -rf /var/lib/apt/lists/*
 
-# Copy the application component
-COPY ./${DST_WRAPPER} /tmp/act-component/${DST_WRAPPER}
+# Copiar código fuente del act-overseer
+COPY . /tmp/act-overseer
 
-# Configure Apache site
-COPY ./docker-config/generic_wrapper.conf /tmp/generic_wrapper.conf
+RUN pip3 install django-cors-headers
 
-# Rename generic_wrapper to wrapper by component
-RUN mv /tmp/generic_wrapper.conf /etc/apache2/sites-available/$WRAPPER.conf
+# Instalar dependencias Python del act-overseer
+RUN pip3 install --no-cache-dir --force-reinstall /tmp/act-overseer
 
+# Copiar configuración personalizada del sitio Apache
+COPY ./docker-config/act_overseer.conf /etc/apache2/sites-available/
+
+# Personalizar configuración según argumentos
 RUN sed -i \
-  -e "s/{{portnumber}}/"$PORT_NUMBER"/g" \
-  -e "s/{{server_name}}/"$SERVER_NAME"/g" \
-  -e "s/{{dst_wrapper}}/"$DST_WRAPPER"/g" \
-  -e "s/{{wrapper}}/"$WRAPPER"/g" \
-  /etc/apache2/sites-available/"$WRAPPER".conf
+-e "s/{{ portnumber }}/$PORT_NUMBER/" \
+-e "s/{{ server_name }}/$SERVER_NAME/" \
+/etc/apache2/sites-available/act_overseer.conf
 
-RUN echo "LISTEN "$PORT_NUMBER"" >> /etc/apache2/ports.conf \
-  && sed -i "/<\/VirtualHost>/i \\\tProxyPass /"$URL_PATH" "$PROXY_URL":"$PORT_NUMBER"/"$URL_PATH"\n\tProxyPassReverse /"$URL_PATH" "$PROXY_URL":"$PORT_NUMBER"/"$URL_PATH"" /etc/apache2/sites-available/000-default.conf
+# Habilitar el sitio y configurar Apache para escuchar el puerto deseado
+RUN a2ensite act_overseer.conf && \
+echo "Listen $PORT_NUMBER" >> /etc/apache2/ports.conf
 
-RUN a2ensite $WRAPPER.conf
+# Configurar ProxyPass directo en el sitio por defecto (por seguridad)
+RUN sed -i "/<\/VirtualHost>/i \\\tProxyPass /act http://${LOCALHOST}:${PORT_NUMBER}/act\n\tProxyPassReverse /act http://${LOCALHOST}:${PORT_NUMBER}/act" /etc/apache2/sites-available/000-default.conf
 
-RUN a2enmod proxy proxy_http
+# Configuración del archivo act_overseer_config con credenciales y URL
+RUN sed -i 's/"user",/"crusoe",/' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config && \
+sed -i 's/"pass",/"'"$VAULT_ACT_OVERSEER_PASSWORD"'",/' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config && \
+sed -i 's|"https://crusoe.csirt.muni.cz"|"'"$EXTERNAL_IP"'"|' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config
 
-#Copy directory to /var/www and set permissions
-RUN cp -r /tmp/act-component/"$DST_WRAPPER" /var/www/ \
-  && chown -R www-data:www-data /var/www/"$DST_WRAPPER" \
-  && chmod -R 755 /var/www/"$DST_WRAPPER"
+# Crear y dar permisos a los logs necesarios
+RUN mkdir -p /var/log/crusoe && \
+touch /var/log/crusoe/act_overseer_rest_api.log /var/log/crusoe/act_decide_to_act.log && \
+chmod 0666 /var/log/crusoe/*.log && \
+cp -r /tmp/act-overseer/act_overseer_rest_api /var/www/ && \
+chown -R www-data:www-data /var/www/act_overseer_rest_api && \
+chown -R www-data:www-data /var/lib/act_overseer
+# Instalar dependencias del componente DECIDE (Neo4j, Mulval, etc.)
+RUN pip3 install neo4j-driver==5.0 pytest neo4j
 
-# Install neo4j package
-RUN pip3 install neo4j_driver==1.7.1
+COPY ./docker-config/neo4j-client /tmp/neo4j-client
+RUN pip3 install --no-cache-dir --force-reinstall /tmp/neo4j-client
 
-# Add the Neo4j script
-COPY ./docker-config/neo4j_update.py /tmp/
+# Variables de entorno para MULVAL y XSB
+ENV MULVALROOT=/opt/mulval
+ENV XSBROOT=/opt/XSB
+ENV PATH="$PATH:$MULVALROOT/bin:$MULVALROOT/utils:$XSBROOT/bin:$XSBROOT/build"
 
-RUN sed -i \
-  -e "s/{{ external_ip }}/"$EXTERNAL_IP"/g" \
-  -e "s/{{ vault_neo4j_password }}/"$VAULT_NEO4J_PASSWORD"/g" \
-  -e "s/{{ ip }}/"$PAO_IP"/g" \
-  -e "s/{{ pao_name }}/"$PAO_NAME"/g" \
-  -e "s/{{ portnumber }}/"$PORTNUMBER"/g" \
-  -e "s/{{ maxCapacity }}/"$MAXCAPACITY"/g" \
-  -e "s/{{ usedCapacity }}/"$USEDCAPACITY"/g" \
-  -e "s/{{ freeCapacity }}/"$FREECAPACITY"/g" \
-  /tmp/neo4j_update.py
-  
-# Expose port on which act component listens
-EXPOSE 80
-EXPOSE 8086
+# Paquetes adicionales y compilación de XSB y MULVAL
+RUN apt-get update && apt-get install -y \
+python3.7 python2 python3-pip default-jdk build-essential \
+bison flex ca-certificates-java autoconf automake libtool gcc make
 
-COPY ./docker-config/entrypoint.sh /
-RUN chmod +x /entrypoint.sh
+# Preparar directorios
+RUN mkdir -p /usr/share/man/man1
 
-CMD /entrypoint.sh
+# Descargar y descomprimir MULVAL
+ADD https://people.cs.ksu.edu/~xou/argus/software/mulval/mulval_1_1.tar.gz /opt/mulval_1_1.tar.gz
+RUN tar -xzvf /opt/mulval_1_1.tar.gz -C /opt/
+
+# Descargar y descomprimir XSB
+ADD http://xsb.sourceforge.net/downloads/XSB.tar.gz /opt/XSB.tar.gz
+RUN tar -xzvf /opt/XSB.tar.gz -C /opt/
+
+# Sustituir scripts de configuración de XSB
+COPY ./docker-config/config.sub /opt/XSB/build/
+COPY ./docker-config/config.guess /opt/XSB/build/
+
+# Compilar XSB
+RUN cd /opt/XSB/build && ./configure && ./makexsb
+
+# Configurar y compilar MULVAL
+RUN sed -i 's|^(LIBS=.*)$|LIBS=/opt/mulval/lib/dom4j-1.6.1.jar:/opt/mulval/lib/jaxen-1.1.1.jar:/opt/mulval/lib/mysql-connector-java-5.1.8-bin.jar|' /opt/mulval/src/adapter/Makefile
+RUN cd /opt/mulval && make
+
+# Instalar dependencias de compilación para numpy/scipy/scikit-learn
+RUN apt-get update && apt-get install -y \
+gfortran \
+libopenblas-dev \
+liblapack-dev \
+pkg-config

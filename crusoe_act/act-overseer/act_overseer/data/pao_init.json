@@ -37,7 +37,7 @@
 		},
 		{
 			"pao": "firewall",
-			"ip": "155.54.98.9",
+			"ip": "155.54.180.23",
 			"port": "1551",
 			"maxCapacity": 10,
 			"usedCapacity": 0,

@@ -5,7 +5,7 @@ curl -sf http://127.0.0.1:8086/firewall/capacity | jq .
 curl -sf http://127.0.0.1:8080/act/threshold | jq .
 
 # Vía dashboard (externo)
-BASE=http://155.54.98.9:15580
+BASE=http://155.54.180.23:15580
 curl -sf $BASE/act/threshold | jq .
 curl -sf $BASE/firewall/capacity | jq .
 

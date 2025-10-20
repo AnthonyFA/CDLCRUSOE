@@ -51,6 +51,15 @@ RUN sed -i 's/"user",/"crusoe",/' /usr/local/lib/python3.7/dist-packages/act_ove
     sed -i 's/"pass",/"'"$VAULT_ACT_OVERSEER_PASSWORD"'",/' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config && \
     sed -i 's|"https://crusoe.csirt.muni.cz"|"'"$EXTERNAL_IP"'"|' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config
 
+RUN install -d -o www-data -g www-data /var/lib/act_overseer && \
+    cp /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config \
+       /var/lib/act_overseer/act_overseer_config && \
+    chown www-data:www-data /var/lib/act_overseer/act_overseer_config && \
+    chmod 660 /var/lib/act_overseer/act_overseer_config && \
+    ln -sf /var/lib/act_overseer/act_overseer_config \
+       /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config
+
+
 RUN mkdir -p /var/log/crusoe && \
   touch /var/log/crusoe/act_overseer_rest_api.log /var/log/crusoe/act_decide_to_act.log && \
   chmod 0666 /var/log/crusoe/*.log && \

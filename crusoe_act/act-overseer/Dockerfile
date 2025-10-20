@@ -51,12 +51,12 @@ RUN sed -i 's/"user",/"crusoe",/' /usr/local/lib/python3.7/dist-packages/act_ove
     sed -i 's/"pass",/"'"$VAULT_ACT_OVERSEER_PASSWORD"'",/' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config && \
     sed -i 's|"https://crusoe.csirt.muni.cz"|"'"$EXTERNAL_IP"'"|' /usr/local/lib/python3.7/dist-packages/act_overseer/data/act_overseer_config
 
-# Crear y dar permisos a los logs necesarios
 RUN mkdir -p /var/log/crusoe && \
   touch /var/log/crusoe/act_overseer_rest_api.log /var/log/crusoe/act_decide_to_act.log && \
   chmod 0666 /var/log/crusoe/*.log && \
   cp -r /tmp/act-overseer/act_overseer_rest_api /var/www/ && \
   chown -R www-data:www-data /var/www/act_overseer_rest_api
+
 
 # Instalar dependencias del componente DECIDE (Neo4j, Mulval, etc.)
 RUN pip3 install neo4j-driver==5.0 pytest neo4j
@@ -90,10 +90,13 @@ COPY ./docker-config/config.sub /opt/XSB/build/
 COPY ./docker-config/config.guess /opt/XSB/build/
 
 # Compilar XSB
-RUN cd /opt/XSB/build && ./configure && ./makexsb
+RUN cd /opt/XSB/build && \
+  ./configure && \
+  ./makexsb
 
 # Configurar y compilar MULVAL
-RUN sed -i 's|^(LIBS=.*)$|LIBS=/opt/mulval/lib/dom4j-1.6.1.jar:/opt/mulval/lib/jaxen-1.1.1.jar:/opt/mulval/lib/mysql-connector-java-5.1.8-bin.jar|' /opt/mulval/src/adapter/Makefile
+RUN sed -i 's|^LIBS=.*$|LIBS=/opt/mulval/lib/dom4j-1.6.1.jar:/opt/mulval/lib/jaxen-1.1.1.jar:/opt/mulval/lib/mysql-connector-java-5.1.8-bin.jar|' \
+    /opt/mulval/src/adapter/Makefile
 RUN cd /opt/mulval && make
 
 # Instalar dependencias de compilación para numpy/scipy/scikit-learn
@@ -116,7 +119,7 @@ RUN pip3 install -r /tmp/crusoe_decide/requirements.txt
 
 COPY ./docker-config/crusoe_decide/ /tmp/crusoe_decide
 
-# Instalar dependencias de crusoe_decide (si existe requirements.txt)
+
 RUN if [ -f /tmp/crusoe_decide/requirements.txt ]; then \
       pip3 install -r /tmp/crusoe_decide/requirements.txt; \
     fi

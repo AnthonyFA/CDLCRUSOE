@@ -1,0 +1,404 @@
+# specification.yml
+openapi: 3.0.0
+info:
+  version: v1
+  title: CRUSOE Act - Generic PAO Wrapper API
+  description: >
+    Generic API specification for CRUSOE Act PAO wrappers.
+    Provides common endpoints (health, capacity, rules CRUD) and a unified rule
+    schema adaptable to multiple PAO types (e.g., firewall, DNS firewall, RTBH,
+    mail filter, user blocker).
+servers:
+  - description: Example deployment URL
+    url: https://example.org/Name/act/v1
+tags:
+  - name: health
+    description: Service liveness/health endpoints
+  - name: capacity
+    description: Capacity reporting endpoints
+  - name: blocked
+    description: Inform or block a subject (legacy alias)
+  - name: rules
+    description: Rule management endpoints
+
+paths:
+  "/{paoType}/health":
+    get:
+      tags: [health]
+      summary: Health check
+      description: Returns a health check for the given PAO type.
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+      responses:
+        "200":
+          description: Successfully returned health status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "503":
+          description: Service unavailable
+
+  "/{paoType}/capacity":
+    get:
+      tags: [capacity]
+      summary: Capacity report
+      description: Returns current capacity figures for the given PAO type.
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+      responses:
+        "200":
+          description: Successfully returned current capacities
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Capacity"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  "/{paoType}/rules":
+    get:
+      tags: [rules]
+      summary: List rules
+      description: Returns a list of rules for the given PAO type.
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - name: subject
+          in: query
+          required: false
+          description: Optional filter by subject (e.g., IP/domain/user/email).
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+    post:
+      tags: [rules]
+      summary: Create rule
+      description: Creates a new rule for the given PAO type.
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRuleRequest"
+      responses:
+        "200":
+          description: Rule created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRuleResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  "/{paoType}/rules/{ruleId}":
+    get:
+      tags: [rules]
+      summary: Get rule details
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - $ref: "#/components/parameters/RuleIdParam"
+      responses:
+        "200":
+          description: Rule details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [rules]
+      summary: Update rule
+      description: Updates mutable fields of the rule (e.g., reason, note, target, zone, port).
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - $ref: "#/components/parameters/RuleIdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateRuleRequest"
+      responses:
+        "200":
+          description: Rule updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [rules]
+      summary: Delete rule
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - $ref: "#/components/parameters/RuleIdParam"
+      responses:
+        "200":
+          description: Rule deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  "/{paoType}/rules/subject/{subject}":
+    get:
+      tags: [rules]
+      summary: List rules by subject
+      description: Returns all rules that match the given subject (e.g., IP/domain/user/email).
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - $ref: "#/components/parameters/SubjectParam"
+      responses:
+        "200":
+          description: List of rules for the subject
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    put:
+      tags: [rules]
+      summary: Bulk update by subject
+      description: Updates fields (e.g., reason, note, target, zone, port) for all rules matching the subject.
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - $ref: "#/components/parameters/SubjectParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkUpdateRequest"
+      responses:
+        "200":
+          description: Updated rules
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Rule"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags: [rules]
+      summary: Bulk delete by subject
+      description: Deletes all rules matching the subject.
+      parameters:
+        - $ref: "#/components/parameters/PaoTypeParam"
+        - $ref: "#/components/parameters/SubjectParam"
+      responses:
+        "200":
+          description: All rules for subject deleted
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+components:
+  parameters:
+    PaoTypeParam:
+      name: paoType
+      in: path
+      required: true
+      description: Type of PAO wrapper.
+      schema:
+        type: string
+        enum: [firewall, dnsfw, rtbh, mailfilter, userblocker, custom]
+    RuleIdParam:
+      name: ruleId
+      in: path
+      required: true
+      schema:
+        type: integer
+        minimum: 1
+      description: Identifier of the rule.
+    SubjectParam:
+      name: subject
+      in: path
+      required: true
+      description: Subject of the rule (IP/domain/user/email depending on paoType).
+      schema:
+        type: string
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Function not supported or forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        serviceStatus:
+          type: string
+          description: Overall status of the wrapper
+          enum: [OK, DEGRADED, DOWN]
+        details:
+          type: object
+          additionalProperties: true
+          description: Optional vendor-specific diagnostics
+
+    Capacity:
+      type: object
+      properties:
+        maxCapacity:
+          type: integer
+          minimum: 0
+        usedCapacity:
+          type: integer
+          minimum: 0
+        freeCapacity:
+          type: integer
+          minimum: 0
+      required: [maxCapacity, usedCapacity, freeCapacity]
+
+    Rule:
+      type: object
+      description: >
+        Generic rule schema normalized across PAO types.
+        For firewall, subject=IP and port may apply.
+        For DNSFW, subject=domain and zone/target may apply.
+        For user/mail, subject=user/email and target may indicate policy/action.
+      properties:
+        ruleId:
+          type: integer
+          readOnly: true
+        ruleType:
+          type: string
+          enum: [firewall, dnsfw, rtbh, mailfilter, userblocker, custom]
+        subject:
+          type: string
+          description: IP/domain/user/email depending on ruleType.
+        port:
+          type: integer
+          nullable: true
+          description: Optional (e.g., firewall).
+        zone:
+          type: string
+          nullable: true
+          description: Optional (e.g., DNS zone).
+        target:
+          type: string
+          nullable: true
+          description: Optional (e.g., DNS sinkhole target or mail action).
+        reason:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+      required: [ruleType, subject]
+
+    CreateRuleRequest:
+      allOf:
+        - $ref: "#/components/schemas/Rule"
+      required: [ruleType, subject]
+      description: Payload to create a rule (ruleId ignored if present).
+
+    CreateRuleResponse:
+      type: object
+      properties:
+        ruleId:
+          type: integer
+      required: [ruleId]
+
+    UpdateRuleRequest:
+      type: object
+      description: Mutable subset of Rule fields for single-rule update.
+      properties:
+        port:
+          type: integer
+          nullable: true
+        zone:
+          type: string
+          nullable: true
+        target:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+
+    BulkUpdateRequest:
+      type: object
+      description: Fields to update for all rules matching the subject.
+      properties:
+        port:
+          type: integer
+          nullable: true
+        zone:
+          type: string
+          nullable: true
+        target:
+          type: string
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+        note:
+          type: string
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+      required: [code, message]

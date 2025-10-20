@@ -3,6 +3,6 @@
   "log_path": "/var/log/crusoe/",
   "user": "neo4j",
   "password": "password",
-  "server_url": "http://155.54.98.9:15580"
+  "server_url": "http://155.54.180.23:15580"
  
 }

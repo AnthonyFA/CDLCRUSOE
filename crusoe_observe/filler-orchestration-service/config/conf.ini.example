@@ -1,5 +1,5 @@
 [crusoe]
-external_ip = 147.251.14.46
+external_ip = 155.54.180.23
 log_path = /var/log/crusoe/
 key_path = /home/crusoe/.ssh/id_rsa
 passphrase =

@@ -9,7 +9,7 @@ import unittest
 
 # Configuración mínima necesaria para las nuevas signaturas de función
 dashboard_log = Mock()  # Mock object para dashboard_log
-firewall_ip_and_port = "155.54.98.9:8086"  # IP y puerto de tu firewall basado en Docker config
+firewall_ip_and_port = "155.54.180.23:8086"  # IP y puerto de tu firewall basado en Docker config
 
 # After decide_to_act receives json from dashboard, it's job is to remove from all hosts important host for
 # given missions and their configurations. Then remove hosts with treshold less then security_treshold value
@@ -37,7 +37,7 @@ test_hosts = [{'host': {'avail': 0.7, 'hostname': 'collector2.csirt.muni.cz', 'c
               {'host': {'avail': 0.5, 'hostname': 'flowmon-rect-ukb', 'conf': 0.0, 'integ': 0.0, 'ip_address': '10.0.117.130'}}]
 
 # URL corregida para tu entorno
-URL = 'http://155.54.98.9:8086'  # Cambiado de crusoe-worker.csirt.muni.cz:8081
+URL = 'http://155.54.180.23:8086'  # Cambiado de crusoe-worker.csirt.muni.cz:8081
 
 class DecideToActTest(unittest.TestCase):
 

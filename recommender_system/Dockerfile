@@ -1,35 +1,31 @@
-FROM python:3.12-bookworm AS build
-
-WORKDIR /app
-
-ENV PIP_DEFAULT_TIMEOUT=100 \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
-
-RUN curl -sSL https://install.python-poetry.org | python3 - && \
-    python -m venv /venv
-
-COPY . .
-
-COPY ./src/recommender/risk_calculator.py /app/src/recommender/risk_calculator.py
-
-RUN . /venv/bin/activate && pip install -e .
-
 FROM python:3.12-slim-bookworm AS runtime
+
 ENV VIRTUAL_ENV=/venv \
-	PATH=/venv/bin:$PATH \
-	PYTHONFAULTHANDLER=1 \
-    PYTHONBUFFERED=1
+    PATH=/venv/bin:$PATH \
+    PYTHONFAULTHANDLER=1 \
+    PYTHONBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
 WORKDIR /app
 
-RUN groupadd -g 1001 app && \
-    useradd -u 1001 -g app -s /bin/sh -d /app app
+# Crea venv
+RUN python -m venv /venv && pip install --upgrade pip
 
-COPY --chown=1001:1001 --from=build /app /app
-COPY --chown=1001:1001 --from=build /venv /venv
+# 1) Instala deps pinneadas
+COPY requirements.txt /app/requirements.txt
+RUN pip install -r /app/requirements.txt
+# (requirements.txt debe contener: neo4j==4.4.11)
+
+# 2) Copia el código y instala editable SIN deps (para no tocar neo4j)
+COPY . /app
+RUN pip install -e . --no-deps
+
+# (opcional si usas layout src)
+ENV PYTHONPATH=/app/src
 
 USER 1001:1001
 EXPOSE 8000
+CMD ["python", "/app/src/backend/manage.py", "runserver", "0.0.0.0:8000"]
 
-CMD python /app/src/backend/manage.py runserver 0.0.0.0:8000
+#Por si no funciona es el neo4j 4.4.1 instalarlo a travñes de pip

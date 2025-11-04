@@ -9,6 +9,7 @@
     Search
   </button>
 </div>
+
 <div class="content-container">
   <div class="graph-wrapper">
     <ng-container *ngIf="graphLoading">
@@ -16,6 +17,7 @@
         <mat-spinner></mat-spinner>
       </div>
     </ng-container>
+
     <ng-container *ngIf="!graphLoading && nodes && nodes.length > 0">
       <ngx-graph class="chart-container" [links]="edges" [nodes]="nodes" layout="colaForceDirected">
         <ng-template #defsTemplate>
@@ -81,16 +83,20 @@
         </ng-template>
       </ngx-graph>
     </ng-container>
+
     <ng-container *ngIf="!graphLoading && errorMessage">
       <p class="error-message">{{ errorMessage }}</p>
     </ng-container>
   </div>
+
   <div class="node-wrapper">
     <ng-container *ngIf="selectedNode.id !== ''; else noNodeSelected">
       <div class="node-card">
         <p [style.color]="selectedNode.data.customColor" class="type-name">IP</p>
         <h2 [style.color]="selectedNode.data.customColor">{{ selectedNode.label }}</h2>
         <hr />
+
+        <!-- ===== Attributes ===== -->
         <p class="heading">Attributes:</p>
         <ul>
           <li *ngFor="let item of getNodeAttributes(selectedNode)">
@@ -100,19 +106,75 @@
             </ul>
           </li>
         </ul>
+
+        <!-- ===== Recommendations (NUEVO) ===== -->
+        <p class="heading" style="margin-top:16px">Recommendations:</p>
+
+        <ng-container *ngIf="selectedNode?.data?.recommendations?.length; else noRecs">
+          <div *ngFor="let r of selectedNode.data.recommendations" style="margin:10px 0 14px 0">
+            <div style="font-weight:600">
+              <span
+                style="font-size:12px; padding:2px 8px; border-radius:999px; margin-right:6px; color:#fff"
+                [ngStyle]="{
+                  background:
+                    r.severity==='critical' ? '#b71c1c' :
+                    r.severity==='high'     ? '#d32f2f' :
+                    r.severity==='medium'   ? '#f57c00' :
+                    r.severity==='low'      ? '#1976d2' : '#616161'
+                }"
+              >
+                {{ r.severity | uppercase }}
+              </span>
+              {{ r.title }}
+            </div>
+
+            <div *ngIf="r.rationale" style="font-size:12px; color:#444; margin:4px 0 6px 0">
+              {{ r.rationale }}
+            </div>
+
+            <ul *ngIf="r.actions?.length" style="margin:0 0 6px 18px">
+              <li *ngFor="let a of r.actions" style="font-size:13px">{{ a }}</li>
+            </ul>
+
+            <div *ngIf="r.refs?.length" style="font-size:12px; color:#444">
+              Refs:
+              <ng-container *ngFor="let ref of r.refs">
+                <a *ngIf="ref.url"
+                   [href]="ref.url" target="_blank" rel="noopener"
+                   style="background:#efefef; border-radius:10px; padding:2px 8px; margin-right:4px; display:inline-block; text-decoration:none;">
+                  {{ ref.type }}<ng-container *ngIf="ref.id">: {{ ref.id }}</ng-container>
+                </a>
+                <span *ngIf="!ref.url"
+                      style="background:#efefef; border-radius:10px; padding:2px 8px; margin-right:4px; display:inline-block">
+                  {{ ref.type }}<ng-container *ngIf="ref.id">: {{ ref.id }}</ng-container>
+                </span>
+              </ng-container>
+            </div>
+
+            <hr />
+          </div>
+        </ng-container>
+
+        <ng-template #noRecs>
+          <em style="color:#666; font-size:12px">No recommendations.</em>
+        </ng-template>
+        <!-- =============================== -->
       </div>
     </ng-container>
+
     <ng-template #noNodeSelected>
       <p class="vertical-center">No node selected.</p>
     </ng-template>
   </div>
 </div>
+
 <ng-container *ngIf="!graphLoading && nodes && nodes.length > 0">
   <table mat-table [dataSource]="nodes" class="mat-elevation-z8">
     <ng-container matColumnDef="ip">
       <th mat-header-cell *matHeaderCellDef>IP</th>
       <td mat-cell *matCellDef="let element">{{ element.data.ip }}</td>
     </ng-container>
+
     <ng-container matColumnDef="domains">
       <th mat-header-cell *matHeaderCellDef>Domains</th>
       <td mat-cell *matCellDef="let element">
@@ -121,6 +183,7 @@
         </ul>
       </td>
     </ng-container>
+
     <ng-container matColumnDef="contacts">
       <th mat-header-cell *matHeaderCellDef>Contacts</th>
       <td mat-cell *matCellDef="let element">
@@ -129,34 +192,42 @@
         </ul>
       </td>
     </ng-container>
+
     <ng-container matColumnDef="os">
       <th mat-header-cell *matHeaderCellDef>OS</th>
       <td mat-cell *matCellDef="let element">{{ joinDict(element.data.os) }}</td>
     </ng-container>
+
     <ng-container matColumnDef="antivirus">
       <th mat-header-cell *matHeaderCellDef>Antivirus</th>
       <td mat-cell *matCellDef="let element">{{ joinDict(element.data.antivirus) }}</td>
     </ng-container>
+
     <ng-container matColumnDef="cms">
       <th mat-header-cell *matHeaderCellDef>CMS</th>
       <td mat-cell *matCellDef="let element">{{ joinDict(element.data.cms) }}</td>
     </ng-container>
+
     <ng-container matColumnDef="cve_count">
       <th mat-header-cell *matHeaderCellDef>CVE Count</th>
       <td mat-cell *matCellDef="let element">{{ element.data.cve_count }}</td>
     </ng-container>
+
     <ng-container matColumnDef="event_count">
       <th mat-header-cell *matHeaderCellDef>Security Event Count</th>
       <td mat-cell *matCellDef="let element">{{ element.data.security_event_count }}</td>
     </ng-container>
+
     <ng-container matColumnDef="risk">
       <th mat-header-cell *matHeaderCellDef>Risk</th>
       <td mat-cell *matCellDef="let element">{{ handleUndefined(element.data.risk) }}</td>
     </ng-container>
+
     <ng-container matColumnDef="distance">
       <th mat-header-cell *matHeaderCellDef>Distance</th>
       <td mat-cell *matCellDef="let element">{{ handleUndefined(element.data.distance) }}</td>
     </ng-container>
+
     <ng-container matColumnDef="path_types">
       <th mat-header-cell *matHeaderCellDef>Path Types</th>
       <td mat-cell *matCellDef="let element">
@@ -165,6 +236,7 @@
         </ul>
       </td>
     </ng-container>
+
     <ng-container matColumnDef="warnings">
       <th mat-header-cell *matHeaderCellDef>Warnings</th>
       <td mat-cell *matCellDef="let element">
@@ -173,6 +245,7 @@
         </ul>
       </td>
     </ng-container>
+
     <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
     <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
   </table>

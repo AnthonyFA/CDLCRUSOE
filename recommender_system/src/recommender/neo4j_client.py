@@ -171,6 +171,28 @@ class Neo4jClient:
                 raise ValueError(f"No path shorter or equal to {max_distance} exists between {ip1} and {ip2}.")
 
             return result["length"]
+        
+    def get_cves_for_host(self, ip: str):
+        """
+        Devuelve los CVEs asociados al host de la IP dada (vía Vulnerability->CVE),
+        normalizando campos clave para recomendaciones.
+        """
+        with self.__driver.session() as session:
+            rows = session.read_transaction(self.__get_cves_for_host_query, str(ip))
+
+        # Normaliza a lista de dicts sencilla
+        return [
+            {
+                "cve_id": r["cve_id"],
+                "base_score": r["base_score"],
+                "attack_vector": r["attack_vector"],
+                "privileges_required": r["privileges_required"],
+                "user_interaction": r["user_interaction"],
+                "description": r["description"],
+            }
+            for r in rows
+        ]    
+    
 
     def __get_network_services(self, ip, session, start, end):
         """
@@ -374,7 +396,26 @@ class Neo4jClient:
 
         result = tx.run(query, ip1=ip1, ip2=ip2)
         return result.single()
+    @staticmethod
+    def __get_cves_for_host_query(tx, ip: str):
+        query = (
+            "MATCH (:IP {address:$ip})<-[:HAS_ASSIGNED]-(:Node)-[:IS_A]->(h:Host) "
+            "MATCH (sw:SoftwareVersion)-[:ON]->(h) "
+            "MATCH (v:Vulnerability)-[:IN]->(sw) "
+            "OPTIONAL MATCH (v)-[:HAS_CVE|REFERS_TO|refers_to]->(c:CVE) "
+            "RETURN "
+            "  coalesce(c.CVE_id, v.CVE_id, v.id)          AS cve_id, "
+            "  coalesce(c.base_score_v3, c.base_score_v2)  AS base_score, "
+            "  c.attack_vector                              AS attack_vector, "
+            "  c.privileges_required                        AS privileges_required, "
+            "  c.user_interaction                           AS user_interaction, "
+            "  coalesce(c.description, v.description, 'N/A') AS description "
+            "LIMIT 200"
+        )
 
+        res = tx.run(query, ip=ip)
+        return [row for row in res]
+    
     @staticmethod
     def __get_host_event_count_subquery():
         return (

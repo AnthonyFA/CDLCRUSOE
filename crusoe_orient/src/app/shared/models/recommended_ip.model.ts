@@ -1,5 +1,5 @@
 export interface RecommendedIP extends AttackedIP {
-  risk: number[];
+  risk: number;
   distance: number;
   path_types: string[];
   warnings: RecommenderWarning[];
@@ -38,4 +38,20 @@ export interface AttackedIP {
   cve_count: number;
   security_event_count: number;
   network_services: NetworkService[];
+
+  recommendations?: Recommendation[];
+}
+
+export interface Recommendation {
+  title: string;
+  severity: string;  
+  rationale?: string;
+  actions?: string[];
+  refs?: RecommendationRef[];
+}
+
+export interface RecommendationRef {
+  type: string;      
+  id?: string;
+  url?: string | null;
 }

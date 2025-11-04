@@ -5,6 +5,7 @@ import { Cluster } from 'cluster';
 import { Subject } from 'rxjs';
 import _ from 'lodash';
 import { RecommenderService } from 'src/app/shared/services/recommender.service';
+import { Recommendation } from 'src/app/shared/models/recommended_ip.model';
 
 @Component({
   selector: 'app-recommender-system-visualization-component',
@@ -22,6 +23,7 @@ export class RecommenderSystemVisualizationComponent implements OnInit {
   errorMessage = '';
   graphLoading: boolean;
   center$: Subject<any> = new Subject();
+
   displayedColumns: string[] = [
     'ip',
     'domains',
@@ -35,6 +37,33 @@ export class RecommenderSystemVisualizationComponent implements OnInit {
     'distance',
     'warnings',
   ];
+
+  // ------- NUEVO: helpers UI de recomendaciones -------
+  recsExpanded = false;
+
+  /** nodo raíz (id '0') si existe */
+  get rootNode(): Node | undefined {
+    return this.nodes.find(n => n.id === '0');
+  }
+
+  /** recomendaciones del nodo raíz (host atacado) */
+  get rootRecs(): Recommendation[] {
+    const r: any[] = (this.rootNode?.data?.recommendations || []) as any[];
+    return Array.isArray(r) ? r as Recommendation[] : [];
+  }
+
+  /** clase CSS por severidad */
+  sevClass(sev: string): string {
+    const s = (sev || '').toLowerCase();
+    return {
+      critical: 'sev sev-critical',
+      high:     'sev sev-high',
+      medium:   'sev sev-medium',
+      low:      'sev sev-low',
+      info:     'sev sev-info'
+    }[s] || 'sev';
+  }
+  // ---------------------------------------------------
 
   constructor(private recommenderService: RecommenderService, private route: ActivatedRoute) {
     if (route.snapshot.params && route.snapshot.params.ip) {
@@ -72,7 +101,7 @@ export class RecommenderSystemVisualizationComponent implements OnInit {
       (error) => {
         this.edges = [];
         this.nodes = [];
-        this.errorMessage = error.error.error.message;
+        this.errorMessage = error.error?.error?.message || 'Request error';
         this.graphLoading = false;
       }
     );
@@ -109,7 +138,7 @@ export class RecommenderSystemVisualizationComponent implements OnInit {
   }
 
   private joinDict(dict): string[] {
-    if (dict === null) {
+    if (dict === null || dict === undefined) {
       return ['*:*:*'];
     }
     const values = Object.values(dict);

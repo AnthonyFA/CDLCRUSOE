@@ -64,16 +64,24 @@ return this.http.get<AttackedIP>(rootUrl).pipe(
     return { nodes, edges };
   }
 
-  private sanitizeNodeData(data: any): any {
-    const cleaned = { ...data };
-    if (typeof cleaned.risk === 'number' && !Number.isFinite(cleaned.risk)) {
-      cleaned.risk = 100;  // o null, o 'Max'
-    }
-    if (typeof cleaned.distance === 'number' && !Number.isFinite(cleaned.distance)) {
-      cleaned.distance = -1;  // o null
-    }
-    return cleaned;
+private sanitizeNodeData(data: any): any {
+  const cleaned = { ...data };
+
+
+  if (Array.isArray(cleaned.risk)) {
+    cleaned.risk = cleaned.risk.length ? Number(cleaned.risk[0]) : 0;
   }
+  if (typeof cleaned.risk !== 'number' || !Number.isFinite(cleaned.risk)) {
+    cleaned.risk = 0;
+  }
+
+  // Normaliza distancia
+  if (typeof cleaned.distance !== 'number' || !Number.isFinite(cleaned.distance)) {
+    cleaned.distance = -1;
+  }
+
+  return cleaned;
+}
 
   private buildInitialNode(root_ip: string, initial_node: AttackedIP): Node {
     let node: Node = {

@@ -7,13 +7,13 @@ from recommender.model.path_type import PathType
 import logging
 import os
 
-log_path = "/tmp/recommender_debug.log"
-logging.basicConfig(
-    filename=log_path,
-    filemode='a',
-    level=logging.DEBUG,
-    format='%(asctime)s [%(levelname)s] %(message)s'
-)
+client_logger = logging.getLogger("recommender.neo4j_client")
+fh = logging.FileHandler("/tmp/recommender_debug.log")
+fh.setLevel(logging.DEBUG)
+fh.setFormatter(logging.Formatter('%(asctime)s [%(levelname)s] %(message)s'))
+client_logger.addHandler(fh)
+client_logger.propagate = True
+
 
 
 class Neo4jClient:
@@ -97,6 +97,7 @@ class Neo4jClient:
                 path_types = {
                     "subnet": PathType.Subnet,
                     "organization": PathType.Organization,
+                    "organization_unit": PathType.Organization,  
                     "contact": PathType.Contact
                 }
 
@@ -357,10 +358,11 @@ class Neo4jClient:
         query = (
             "MATCH (sw:SoftwareVersion) "
             "WHERE sw.tag = $tag "
-            "RETURN DISTINCT sw.version"
+            "RETURN DISTINCT sw.version AS version"
         )
         result = tx.run(query, tag=tag)
-        return [SoftwareComponent(tag, row["sw.version"]) for row in result]
+        return [SoftwareComponent(tag, row["version"]) for row in result]
+
 
     @staticmethod
     def __get_average_event_count_query(tx):

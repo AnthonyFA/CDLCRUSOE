@@ -8,7 +8,7 @@
 
 set -euo pipefail
 
-NEO4J_CONT="${NEO4J_CONT:-cdlcrusoe-neo4j-1}"
+NEO4J_CONT="${NEO4J_CONT:-cdlcrusoe-crusoe_observe-1}"
 NEO4J_USER="${NEO4J_USER:-neo4j}"
 NEO4J_PASS="${NEO4J_PASS:-neo4j}"
 

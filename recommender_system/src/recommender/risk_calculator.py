@@ -91,6 +91,71 @@ class RiskCalculator:
                 if comp is not None:
                     self.__comparators.append(comp)
 
+    def explain_risk(self, attacked_host, compared_host, log: bool = False):
+        """
+        Devuelve el desglose del cálculo de riesgo entre attacked_host (referencia)
+        y compared_host (candidato): similitudes parciales por comparador, multiplicador
+        de path, distancia, similitud total y riesgo final.
+
+        :param attacked_host: Host de referencia (atacado)
+        :param compared_host: Host comparado
+        :param log: si True, hace logging INFO del cálculo
+        :return: dict con {ip, distance, path_types, path_multiplier, partials, similarity, risk}
+        """
+        import logging
+
+        # Fija host de referencia para todos los comparadores
+        self.__set_reference_host(attacked_host)
+
+        parts = {}
+        similarity = 1.0
+
+        for comparator in self.__comparators:
+            ps = comparator.calc_partial_similarity(compared_host)
+
+            # sanea valores inválidos
+            if ps is None or math.isnan(ps) or math.isinf(ps):
+                ps = 0.0
+
+            parts[comparator.get_name()] = float(ps)
+            similarity *= ps
+
+        path_multiplier = 1.0
+        path_types = getattr(compared_host, "path_types", []) or []
+        if self.__config["path"]["apply"]:
+            for pt in path_types:
+                path_multiplier *= float(self.__path_coefficients.get(pt, 1.0))
+
+        distance = getattr(compared_host, "distance", 1) or 1
+        if distance <= 0:
+            distance = 1
+
+        # Riesgo final
+        risk = (similarity * path_multiplier) / distance
+
+        out = {
+            "ip": getattr(compared_host, "ip", getattr(compared_host, "id", "?")),
+            "distance": int(distance),
+            "path_types": [pt.name if hasattr(pt, "name") else str(pt) for pt in path_types],
+            "path_multiplier": path_multiplier,
+            "partials": parts,
+            "similarity": similarity,
+            "risk": risk,
+        }
+
+        if log:
+            logging.getLogger(__name__).info("EXPLAIN %s", out)
+
+        return out
+
+    def explain_risk_from_ips(self, ref_ip: str, cmp_ip: str, log: bool = False):
+        """
+        Helper: obtiene los hosts desde Neo4j y llama a explain_risk().
+        """
+        ref = self.__db_client.get_host_by_ip(ref_ip)
+        cmp_ = self.__db_client.get_host_by_ip(cmp_ip)
+        return self.explain_risk(ref, cmp_, log=log)
+
     def __set_reference_host(self, attacked_host):
         """
         Sets reference host to every comparator in the comparator list.
@@ -113,7 +178,7 @@ class RiskCalculator:
 
         logger = logging.getLogger(__name__)
 
-        # Evitar comparación consigo mismo (si se da el caso)
+
         if hasattr(compared_host, 'id') and hasattr(self, '_RiskCalculator__reference_host'):
             if compared_host.id == self.__reference_host.id:
                 logger.warning(f"Host {compared_host.id} comparado consigo mismo. Riesgo ignorado.")
@@ -124,7 +189,6 @@ class RiskCalculator:
         for comparator in self.__comparators:
             partial_similarity = comparator.calc_partial_similarity(compared_host)
 
-            # Validación y limpieza del valor
             if partial_similarity is None or math.isnan(partial_similarity) or math.isinf(partial_similarity):
                 logger.warning(f"Similitud inválida ({partial_similarity}) en {comparator.get_name()} — usando 0.0")
                 partial_similarity = 0.0
